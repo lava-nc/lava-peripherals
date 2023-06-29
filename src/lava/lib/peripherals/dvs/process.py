@@ -98,18 +98,18 @@ class PropheseeCamera(AbstractProcess):
                 # Generate some artificial data
                 n_random_spikes = 1000 
                 test_data = np.zeros(n_random_spikes, dtype=np.dtype([("y", int), ("x", int), ("p", int), ("t", int)]))
-                test_data["x"] = np.random.rand(n_random_spikes) * width 
-                test_data["y"] = np.random.rand(n_random_spikes) * height 
-                test_data["p"] = np.random.rand(n_random_spikes) * 2 
+                test_data["x"] = np.random.rand(n_random_spikes) * width
+                test_data["y"] = np.random.rand(n_random_spikes) * height
+                test_data["p"] = np.random.rand(n_random_spikes) * 2
                 test_data["t"] = np.sort(np.random.rand(n_random_spikes) * 1e6)
 
                 # Transform data
                 test_data = self.transformations(test_data)
                 if len(test_data) > 0:
-                    volume = np.zeros((self.num_output_time_bins, polarities, height, width), dtype=np.uint8)
+                    volume = np.zeros(self.shape, dtype=np.uint8)
                     histo_quantized(test_data, volume, np.max(test_data['t']))
 
-            except TypeError:
+            except Exception:
                 raise Exception("Your transformer is not compatible with the provided data.")
 
         self.s_out = OutPort(shape=self.shape)

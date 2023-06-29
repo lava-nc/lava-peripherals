@@ -407,6 +407,22 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
                          cropped_size)
         self.assertTrue(shape_test(transformations, num_output_time_bins, desired_shape))
 
+    def test_automatic_shape_centercrop_2(self):
+        "Test that automatic shape detection works for CenterCrop Transformer."
+        reader = RawReader(SEQUENCE_FILENAME_RAW)
+        height, width = reader.get_size()
+        del reader
+        cropped_size = 5
+        transformations = tonic.transforms.Compose(
+           [tonic.transforms.CenterCrop(sensor_size=(width, height, 2), size=(cropped_size, cropped_size)),]
+        )
+        num_output_time_bins = 3
+        desired_shape = (num_output_time_bins,
+                         2,
+                         cropped_size,
+                         cropped_size)
+        self.assertTrue(shape_test(transformations, num_output_time_bins, desired_shape))
+
     def test_automatic_shape_randomcrop(self):
         "Test that automatic shape detection works for RandomCrop Transformer."
         reader = RawReader(SEQUENCE_FILENAME_RAW)
@@ -474,10 +490,47 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
             ]
         )
 
-
         with self.assertWarns(Warning):
             camera = PropheseeCamera(device=SEQUENCE_FILENAME_RAW,
                                      sensor_shape=(height, width),
                                      transformations=transformations,
                                      num_output_time_bins=num_output_time_bins)
 
+    def test_invalid_transformation(self):
+        "Test custom transformation."
+        reader = RawReader(SEQUENCE_FILENAME_RAW)
+        height, width = reader.get_size()
+        del reader
+
+        num_output_time_bins = 7
+        transformations = tonic.transforms.Compose(
+            [
+                tonic.transforms.ToImage(sensor_size=(height, width, 2)),
+            ]
+        )
+
+        with self.assertRaises(TypeError):
+            PropheseeCamera(device=SEQUENCE_FILENAME_RAW,
+                            sensor_shape=(height, width),
+                            transformations=transformations,
+                            num_output_time_bins=num_output_time_bins)
+
+    def test_invalid_transformation_manual(self):
+        "Test custom transformation."
+        reader = RawReader(SEQUENCE_FILENAME_RAW)
+        height, width = reader.get_size()
+        del reader
+
+        num_output_time_bins = 7
+        transformations = tonic.transforms.Compose(
+            [
+                tonic.transforms.ToImage(sensor_size=(width, height, 2)),
+            ]
+        )
+
+        with self.assertRaises(Exception):
+            PropheseeCamera(device=SEQUENCE_FILENAME_RAW,
+                            sensor_shape=(height, width),
+                            transformations=transformations,
+                            num_output_time_bins=num_output_time_bins,
+                            out_shape=(num_output_time_bins, 2, height, width))
