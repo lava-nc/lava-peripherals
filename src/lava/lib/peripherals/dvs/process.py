@@ -110,7 +110,7 @@ class PropheseeCamera(AbstractProcess):
                     histo_quantized(test_data, volume, np.max(test_data['t']))
 
             except Exception:
-                raise Exception("Your transformer is not compatible with the provided data.")
+                raise Exception("Your transformation is not compatible with the provided data.")
 
         self.s_out = OutPort(shape=self.shape)
 
@@ -213,32 +213,33 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
         else:
             # Runtime was not paused in the meantime
             delta_t = np.max([10000, (t_now - self.t_last_iteration) // 1000])
-            events = self.reader.load_delta_t(delta_t)        
-
+            events = self.reader.load_delta_t(delta_t)
 
         # Apply filters to events
         for filter in self.filters:
             events_out = filter.get_empty_output_buffer()
             filter.process_events(events, events_out)
-            events = events_out.numpy()
+            events = events_out
+
+        if len(self.filters) > 0:
+            events = events.numpy()
 
         # Transform events
-        if not self.transformations is None:
+        if not self.transformations is None and len(events) > 0:
             events = self.transformations(events)
 
         # Transform to frame
         if len(events) > 0:
-            histo_quantized(events, self.volume, delta_t)
+            histo_quantized(events, self.volume, delta_t, reset=True)
             frames = self.volume
         else:
             frames = np.zeros(self.s_out.shape)
 
-        # Send 
+        # Send
         self.s_out.send(frames)
         self.t_last_iteration = t_now
 
     def _pause(self):
-        """ Pause was called by the runtime """
+        """Pause was called by the runtime"""
         super()._pause()
         self.t_pause = time.time_ns()
-
