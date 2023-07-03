@@ -96,7 +96,7 @@ class PropheseeCamera(AbstractProcess):
         if self.transformations is not None:
             try:
                 # Generate some artificial data
-                n_random_spikes = 1000 
+                n_random_spikes = 1000
                 test_data = np.zeros(n_random_spikes, dtype=np.dtype([("y", int), ("x", int), ("p", int), ("t", int)]))
                 test_data["x"] = np.random.rand(n_random_spikes) * width
                 test_data["y"] = np.random.rand(n_random_spikes) * height
@@ -176,7 +176,7 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
     def __init__(self, proc_params):
         super().__init__(proc_params)
         self.shape = proc_params['shape']
-        self.num_output_time_bins, _, self.height, self.width = self.shape
+        self.num_output_time_bins, self.polarities, self.height, self.width = self.shape
         self.device = proc_params['device']
         self.filters = proc_params['filters']
         self.max_events_per_dt = proc_params['max_events_per_dt']
@@ -192,7 +192,7 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
                 device_biases.set(k, v)
 
      
-        self.volume = np.zeros((self.num_output_time_bins, 2, self.height, self.width), dtype=np.uint8)
+        self.volume = np.zeros((self.num_output_time_bins, self.polarities, self.height, self.width), dtype=np.uint8)
         self.t_pause = time.time_ns()
         self.t_last_iteration = time.time_ns()
 
