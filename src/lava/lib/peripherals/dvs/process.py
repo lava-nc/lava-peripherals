@@ -112,7 +112,7 @@ class PropheseeCamera(AbstractProcess):
             except Exception:
                 raise Exception("Your transformation is not compatible with the provided data.")
 
-        self.s_out = OutPort(shape=self.shape)
+        self.s_out = OutPort(shape=(np.prod(self.shape), ))
 
         super().__init__(shape=self.shape,
                          biases=self.biases,
@@ -171,7 +171,7 @@ class PropheseeCamera(AbstractProcess):
 @requires(CPU)
 @tag('floating_pt')
 class PyPropheseeCameraModel(PyLoihiProcessModel):
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_SPARSE, np.int32)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
@@ -236,8 +236,18 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
             frames = np.zeros(self.s_out.shape)
 
         # Send
-        self.s_out.send(frames)
+        data, indices = self._flatten_output(frames)
+        self.s_out.send(data, indices)
         self.t_last_iteration = t_now
+
+    def _flatten_output(self, frames: np.ndarray) -> ty.Tuple[np.ndarray, np.ndarray]:
+        """Prepares the output data to be sent via the outport by creating a data, index pair or Sparse."""
+        if frames.sum() == 0:
+            return np.array([]), np.array([])
+        idx = np.where(frames)
+        flat_idx = np.ravel_multi_index(idx, self.shape)
+        data = frames[idx]
+        return data, flat_idx
 
     def _pause(self):
         """Pause was called by the runtime"""

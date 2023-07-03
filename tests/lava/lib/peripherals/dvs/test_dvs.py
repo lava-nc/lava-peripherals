@@ -81,7 +81,8 @@ def shape_test(transformations, num_output_time_bins, expected_output):
                              transformations=transformations,
                              num_output_time_bins=num_output_time_bins)
 
-    return camera.s_out.shape == expected_output
+    expected_flat_shape = (np.prod(expected_output), )
+    return camera.s_out.shape == expected_flat_shape
 
 
 class TestPropheseeCamera(unittest.TestCase):
@@ -97,10 +98,12 @@ class TestPropheseeCamera(unittest.TestCase):
                                  sensor_shape=(height, width),
                                  num_output_time_bins=num_output_time_bins)
 
-
         self.assertIsInstance(camera, PropheseeCamera)
 
-        self.assertEqual(camera.s_out.shape, (num_output_time_bins, 2, height, width))
+        desired_shape = (num_output_time_bins, 2, height, width)
+        desired_flat_shape = (np.prod(desired_shape), )
+        self.assertEqual(camera.shape, desired_shape)
+        self.assertEqual(camera.s_out.shape, desired_flat_shape)
 
     def test_invalid_parameters(self):
         """Test that instantiating the PropheseeCamera Process with an invalid
@@ -474,7 +477,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
 
         desired_shape = (num_output_time_bins, 2, height, width)
 
-        self.assertTrue(camera.s_out.shape == desired_shape)
+        self.assertTrue(shape_test(transformations, num_output_time_bins, desired_shape))
 
     def test_custom_transformation(self):
         "Test custom transformation."
