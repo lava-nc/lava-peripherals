@@ -71,7 +71,8 @@ class PySpkRecvModelFloat(PyLoihiProcessModel):
     def run_spk(self):
         """Receive spikes and store in an internal variable"""
         frame = self.s_in.recv()
-        data = np.zeros(self.shape + (3, ), np.uint8) 
+        frame.sum(axis=0).sum(axis=0)
+        data = np.zeros(self.shape[-2:] + (3, ), np.uint8) 
        
         data[:, :, 0] = 255 // (frame.max() + 1) * frame[0, 1, :, :].astype(np.uint8)
         data[:, :, 1] = 255 // (frame.max() + 1) * frame[0, 0, :, :].astype(np.uint8)
