@@ -50,11 +50,9 @@ class VisProcess(AbstractProcess):
     shape: tuple, shape of the process
     """
 
-    def __init__(self, shape, sensor_size):
-        super().__init__(shape=shape,
-                         sensor_size=sensor_size)
+    def __init__(self, shape):
+        super().__init__(shape=shape)
         self.shape = shape
-        self.sensor_size = sensor_size
         self.s_in = InPort(shape=shape)
 
 
@@ -63,21 +61,17 @@ class VisProcess(AbstractProcess):
 @requires(CPU)
 @tag('floating_pt')
 class PySpkRecvModelFloat(PyLoihiProcessModel):
-    s_in: PyInPort = LavaPyType(PyInPort.VEC_SPARSE, np.float32)
+    s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float32)
     
     def __init__(self, proc_params):
         super().__init__(proc_params)
         self.shape = proc_params['shape']
-        self.sensor_size = proc_params['sensor_size']
         self.label = "live plot"
 
     def run_spk(self):
         """Receive spikes and store in an internal variable"""
-        flat_frame, flat_indices = self.s_in.recv()
-        frame = np.zeros(self.sensor_size)
-        indices = np.unravel_index(flat_indices, self.sensor_size)
-        frame[indices] = flat_frame
-        data = np.zeros(self.sensor_size[2:] + (3, ), np.uint8) 
+        frame = self.s_in.recv()
+        data = np.zeros(self.shape + (3, ), np.uint8) 
        
         data[:, :, 0] = 255 // (frame.max() + 1) * frame[0, 1, :, :].astype(np.uint8)
         data[:, :, 1] = 255 // (frame.max() + 1) * frame[0, 0, :, :].astype(np.uint8)
