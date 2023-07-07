@@ -1,3 +1,7 @@
+# Copyright (C) 2023 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import unittest
 
 import numpy as np
@@ -6,7 +10,7 @@ import time
 import typing as ty
 
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.ports.ports import InPort, OutPort
+from lava.magma.core.process.ports.ports import InPort
 from lava.magma.core.process.variable import Var
 
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
@@ -28,7 +32,6 @@ from metavision_sdk_cv import ActivityNoiseFilterAlgorithm
 import tonic
 
 SEQUENCE_FILENAME_RAW = "sparklers.raw"
-# if the file doesn't exist, it will be downloaded from Prophesee's public sample server
 get_sample(SEQUENCE_FILENAME_RAW)
 assert os.path.isfile(SEQUENCE_FILENAME_RAW)
 
