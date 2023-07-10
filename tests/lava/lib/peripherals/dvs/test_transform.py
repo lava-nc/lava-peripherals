@@ -9,7 +9,7 @@ import numpy as np
 import os
 import copy
 
-from lava.lib.peripherals.dvs.transform import Downsample, Compose, EventVolume, MergePolarities
+from lava.lib.peripherals.dvs.transform import Downsample, Compose, EventVolume, MergePolarities, MirrorHorizontally, MirrorVertically
 
 from metavision_core.event_io import RawReader
 from metavision_core.utils import get_sample
@@ -71,7 +71,6 @@ class TestDownsample(unittest.TestCase):
         self.assertEqual(output_shape.width, int(width) * factor)
         self.assertEqual(output_shape.height, int(height) * factor)
 
-
 class TestMergePolarities(unittest.TestCase):
 
     def test_merge(self):
@@ -100,6 +99,78 @@ class TestMergePolarities(unittest.TestCase):
         output_shape = merge.determine_output_shape(input_shape=event_volume)
 
         self.assertEqual(output_shape.polarities, 1)
+
+
+class TestMirrorHorizontally(unittest.TestCase):
+
+    def test_mirror(self):
+
+        reader = RawReader(SEQUENCE_FILENAME_RAW)
+        height, width = reader.get_size()
+
+        mirror_axis = height // 2
+
+        delta_t = 100000
+
+        events = reader.load_delta_t(delta_t)
+        transform = MirrorHorizontally(height=mirror_axis)
+
+        transformed_events = copy.deepcopy(events) 
+        transform(transformed_events)
+
+        diff = events['y']- mirror_axis
+        desired_y = mirror_axis - diff
+
+        self.assertTrue(np.all(transformed_events['y'] == desired_y))
+
+    def test_shape_transform(self):
+
+        reader = RawReader(SEQUENCE_FILENAME_RAW)
+        height, width = reader.get_size()
+        event_volume = EventVolume(height=height,
+                                   width=width,
+                                   polarities=2)
+
+        transform = MirrorHorizontally(height=height // 2)
+        output_shape = transform.determine_output_shape(input_shape=event_volume)
+
+        self.assertEqual(event_volume, output_shape)
+
+
+class TestMirrorVertically(unittest.TestCase):
+
+    def test_mirror(self):
+
+        reader = RawReader(SEQUENCE_FILENAME_RAW)
+        height, width = reader.get_size()
+
+        mirror_axis = width // 2
+
+        delta_t = 100000
+
+        events = reader.load_delta_t(delta_t)
+        transform = MirrorVertically(width=mirror_axis)
+
+        transformed_events = copy.deepcopy(events) 
+        transform(transformed_events)
+
+        diff = events['x']- mirror_axis
+        desired_x = mirror_axis - diff
+
+        self.assertTrue(np.all(transformed_events['x'] == desired_x))
+
+    def test_shape_transform(self):
+
+        reader = RawReader(SEQUENCE_FILENAME_RAW)
+        height, width = reader.get_size()
+        event_volume = EventVolume(height=height,
+                                   width=width,
+                                   polarities=2)
+
+        transform = MirrorVertically(width=width // 2)
+        output_shape = transform.determine_output_shape(input_shape=event_volume)
+
+        self.assertEqual(event_volume, output_shape)
 
 
 class TestCompose(unittest.TestCase):

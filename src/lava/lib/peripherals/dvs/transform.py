@@ -22,7 +22,7 @@ class Transformation:
     """Base class for transformations."""
 
     @abstractmethod
-    def __call__(self, events):
+    def __call__(self, events: np.ndarray):
         """Transform data.
 
         Parameters
@@ -62,7 +62,7 @@ class Compose:
         """
         self.transformations = transformations
 
-    def __call__(self, events):
+    def __call__(self, events: np.ndarray):
         for t in self.transformations:
             t(events)
 
@@ -84,10 +84,8 @@ class Compose:
         return input_shape
 
 class Downsample(Transformation):
-    def __init__(self,
-                 factor: ty.Union[float, ty.Dict[str, float]],
-                 input_shape: EventVolume = None,
-                 output_shape: EventVolume = None):
+
+    def __init__(self, factor: ty.Union[float, ty.Dict[str, float]]):
         """Downsamples x and y coordinates by given factor.
 
         Parameters
@@ -100,6 +98,7 @@ class Downsample(Transformation):
             If not provided, the transformation calculates the output shape.
             automatically.
         """
+        super().__init__()
         if isinstance(factor, float):
             self.factor_x = self.factor_y = factor
         elif isinstance(factor, dict):
@@ -108,7 +107,7 @@ class Downsample(Transformation):
         else:
             raise NotImplementedError("factor must be either of type float or dict.")
 
-    def __call__(self, events):
+    def __call__(self, events: np.ndarray):
         """Transform data by multiplying height and width with given factor.
 
         Parameters
@@ -140,7 +139,7 @@ class Downsample(Transformation):
 
 class MergePolarities(Transformation):
 
-    def __call__(self, events):
+    def __call__(self, events: np.ndarray):
         """Put all events in one polarity.
 
         Parameters
@@ -166,3 +165,80 @@ class MergePolarities(Transformation):
         output_shape = copy.deepcopy(input_shape)
         output_shape.polarities = 1
         return output_shape
+
+class MirrorHorizontally(Transformation):
+
+    def __init__(self, height: int):
+        """Mirror events on a horizontal axis.
+
+        Parameters
+        ----------
+        height: int
+            Height of the horizontal axis the events are mirrored.
+        """
+        super().__init__()
+        self.height = height 
+
+    def __call__(self, events: np.ndarray):
+        """Mirror events on a horizontal axis.
+
+        Parameters
+        ----------
+        events: np.ndarray
+            DVS events
+        """
+        events['y'] = 2*self.height - events['y']
+
+    def determine_output_shape(self, input_shape: EventVolume) -> EventVolume:
+        """Determine output shape.
+
+        Parameters
+        ----------
+        input_shape: EventVolume
+            Shape of the incoming events.
+
+        Returns
+        -------
+        output_shape: EventVolume
+            Shape of the outcoming events.
+       """
+        return input_shape 
+
+class MirrorVertically(Transformation):
+
+    def __init__(self, width: int):
+        """Mirror events on a vertical axis.
+
+        Parameters
+        ----------
+        width: int
+            Width of the vertical axis the events are mirrored.
+        """
+        super().__init__()
+        self.width = width
+
+
+    def __call__(self, events: np.ndarray):
+        """Mirror events on a vertical axis.
+
+        Parameters
+        ----------
+        events: np.ndarray
+            DVS events
+        """
+        events['x'] = 2*self.width - events['x']
+
+    def determine_output_shape(self, input_shape: EventVolume) -> EventVolume:
+        """Determine output shape.
+
+        Parameters
+        ----------
+        input_shape: EventVolume
+            Shape of the incoming events.
+
+        Returns
+        -------
+        output_shape: EventVolume
+            Shape of the outcoming events.
+       """
+        return input_shape 
