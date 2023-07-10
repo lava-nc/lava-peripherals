@@ -108,18 +108,16 @@ class TestMirrorHorizontally(unittest.TestCase):
         reader = RawReader(SEQUENCE_FILENAME_RAW)
         height, width = reader.get_size()
 
-        mirror_axis = height // 2
-
         delta_t = 100000
 
         events = reader.load_delta_t(delta_t)
-        transform = MirrorHorizontally(height=mirror_axis)
+        transform = MirrorHorizontally(height=height)
 
         transformed_events = copy.deepcopy(events) 
         transform(transformed_events)
 
-        diff = events['y']- mirror_axis
-        desired_y = mirror_axis - diff
+        diff = events['y'] - height // 2 
+        desired_y = height // 2 - diff
 
         self.assertTrue(np.all(transformed_events['y'] == desired_y))
 
@@ -131,7 +129,7 @@ class TestMirrorHorizontally(unittest.TestCase):
                                    width=width,
                                    polarities=2)
 
-        transform = MirrorHorizontally(height=height // 2)
+        transform = MirrorHorizontally(height=height)
         output_shape = transform.determine_output_shape(input_shape=event_volume)
 
         self.assertEqual(event_volume, output_shape)
@@ -144,18 +142,16 @@ class TestMirrorVertically(unittest.TestCase):
         reader = RawReader(SEQUENCE_FILENAME_RAW)
         height, width = reader.get_size()
 
-        mirror_axis = width // 2
-
         delta_t = 100000
 
         events = reader.load_delta_t(delta_t)
-        transform = MirrorVertically(width=mirror_axis)
+        transform = MirrorVertically(width=width)
 
         transformed_events = copy.deepcopy(events) 
         transform(transformed_events)
 
-        diff = events['x']- mirror_axis
-        desired_x = mirror_axis - diff
+        diff = events['x']- width // 2 
+        desired_x = width // 2 - diff
 
         self.assertTrue(np.all(transformed_events['x'] == desired_x))
 
@@ -167,7 +163,7 @@ class TestMirrorVertically(unittest.TestCase):
                                    width=width,
                                    polarities=2)
 
-        transform = MirrorVertically(width=width // 2)
+        transform = MirrorVertically(width=width)
         output_shape = transform.determine_output_shape(input_shape=event_volume)
 
         self.assertEqual(event_volume, output_shape)

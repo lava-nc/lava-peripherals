@@ -31,8 +31,7 @@ import inspect
 from metavision_core.event_io import RawReader
 from metavision_ml.preprocessing.event_to_tensor import histo_quantized
 
-from tonic.transforms import Compose
-import tonic
+from lava.lib.peripherals.dvs.transform import Compose, EventVolume
 import warnings
 
 class PropheseeCamera(AbstractProcess):
@@ -89,8 +88,13 @@ class PropheseeCamera(AbstractProcess):
             self.shape = out_shape
         # Automatically determine out_shape
         else:
-            polarities, height, width = self._determine_output_shape(2, height, width, transformations)
-            self.shape = (num_output_time_bins, polarities, height, width)
+            event_shape = EventVolume(height=height, width=width, polarities=2)
+            if transformations is not None:
+                event_shape = self.transformations.determine_output_shape(event_shape)
+            self.shape = (num_output_time_bins,
+                          event_shape.polarities,
+                          event_shape.height,
+                          event_shape.width)
 
         # Check whether provided transformation is valid
         if self.transformations is not None:
@@ -104,7 +108,7 @@ class PropheseeCamera(AbstractProcess):
                 test_data["t"] = np.sort(np.random.rand(n_random_spikes) * 1e6)
 
                 # Transform data
-                test_data = self.transformations(test_data)
+                self.transformations(test_data)
                 if len(test_data) > 0:
                     volume = np.zeros(self.shape, dtype=np.uint8)
                     histo_quantized(test_data, volume, np.max(test_data['t']))
@@ -121,50 +125,6 @@ class PropheseeCamera(AbstractProcess):
                          max_events_per_dt=self.max_events_per_dt,
                          transformations=self.transformations,
                          num_output_time_bins=self.num_output_time_bins)
-
-    def _determine_output_shape(self, polarities, height, width, transformations):
-        invalid_transforms = {tonic.transforms.ToVoxelGrid,
-                              tonic.transforms.ToImage,
-                              tonic.transforms.ToBinaRep,
-                              tonic.transforms.ToTimesurface,
-                              tonic.transforms.ToAveragedTimesurface,
-                              tonic.transforms.ToSparseTensor,
-                              tonic.transforms.ToOneHotEncoding,
-                              tonic.transforms.ToFrame}
-
-        if transformations is not None:
-            for transform in transformations.transforms:
-
-                # Invalid Transforms
-                if type(transform) in invalid_transforms:
-                    raise TypeError(f"You can only use event transformations, "
-                                    f"Compose object contained event representation {transform}.")
-
-                # Shape Changing Transforms
-                elif type(transform) == tonic.transforms.MergePolarities:
-                    polarities = 1
-                elif type(transform) == tonic.transforms.Downsample:
-                    height = math.ceil(height * transform.spatial_factor)
-                    width = math.ceil(width * transform.spatial_factor)
-                elif type(transform) == tonic.transforms.CenterCrop:
-                    if type(transform.size) is int:
-                        height = width = transform.size
-                    else:
-                        height, width, = transform.size
-                elif type(transform) == tonic.transforms.RandomCrop:
-                    height, width = transform.target_size
-
-                # Composition
-                elif type(transform) == tonic.transforms.Compose:
-                    polarities, height, width = self._determine_output_shape(polarities, height, width, transform)
-
-                # Otherwise, it should be in the non shape changing 
-                else:
-                    _, tonic_transforms = zip(*inspect.getmembers(transforms))
-                    if not (type(transform) in tonic_transforms and inspect.isclass(type(transform))):
-                        warnings.warn(f"Unknown transformation {transform}."
-                                      f"Automatic shape detection may be incorrect.")
-        return (polarities, height, width)
 
 
 @implements(proc=PropheseeCamera, protocol=LoihiProtocol)
@@ -226,7 +186,7 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
 
         # Transform events
         if not self.transformations is None and len(events) > 0:
-            events = self.transformations(events)
+            self.transformations(events)
 
         # Transform to frame
         if len(events) > 0:

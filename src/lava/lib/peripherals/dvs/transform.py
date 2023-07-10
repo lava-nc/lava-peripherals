@@ -22,13 +22,18 @@ class Transformation:
     """Base class for transformations."""
 
     @abstractmethod
-    def __call__(self, events: np.ndarray):
+    def __call__(self, events: np.ndarray) -> np.ndarray:
         """Transform data.
 
         Parameters
         ----------
         events: np.ndarray
             DVS events
+
+        Returns
+        -------
+        events: np.ndarray
+            Transformed DSV events
 
         """
         pass
@@ -62,9 +67,22 @@ class Compose:
         """
         self.transformations = transformations
 
-    def __call__(self, events: np.ndarray):
+    def __call__(self, events: np.ndarray) -> np.ndarray:
+        """Apply all transformations:
+
+        Parameters
+        ----------
+        events: np.ndarray
+            DVS events
+
+        Returns
+        -------
+        events: np.ndarray
+            Transformed DSV events
+        """
         for t in self.transformations:
-            t(events)
+            events = t(events)
+        return events
 
     def determine_output_shape(self, input_shape: EventVolume):
         """Apply shape transformation of all transfomations in this compose.
@@ -107,16 +125,21 @@ class Downsample(Transformation):
         else:
             raise NotImplementedError("factor must be either of type float or dict.")
 
-    def __call__(self, events: np.ndarray):
+    def __call__(self, events: np.ndarray) -> np.ndarray:
         """Transform data by multiplying height and width with given factor.
 
         Parameters
         ----------
         events: np.ndarray
             DVS events
+        Returns
+        -------
+        events: np.ndarray
+            Transformed DSV events
         """
         events['x'] = (events['x'] * self.factor_x).astype(np.int32)
         events['y'] = (events['y'] * self.factor_y).astype(np.int32)
+        return events
 
     def determine_output_shape(self, input_shape: EventVolume) -> EventVolume:
         """Determine output shape.
@@ -139,15 +162,20 @@ class Downsample(Transformation):
 
 class MergePolarities(Transformation):
 
-    def __call__(self, events: np.ndarray):
+    def __call__(self, events: np.ndarray) -> np.ndarray:
         """Put all events in one polarity.
 
         Parameters
         ----------
         events: np.ndarray
             DVS events
+        Returns
+        -------
+        events: np.ndarray
+            Transformed DSV events
         """
         events['p'] = (events['p'] * 0).astype(np.int32)
+        return events
 
     def determine_output_shape(self, input_shape: EventVolume) -> EventVolume:
         """Determine output shape.
@@ -174,20 +202,25 @@ class MirrorHorizontally(Transformation):
         Parameters
         ----------
         height: int
-            Height of the horizontal axis the events are mirrored.
+            Height of the original events.
         """
         super().__init__()
         self.height = height 
 
-    def __call__(self, events: np.ndarray):
+    def __call__(self, events: np.ndarray) -> np.ndarray:
         """Mirror events on a horizontal axis.
 
         Parameters
         ----------
         events: np.ndarray
             DVS events
+        Returns
+        -------
+        events: np.ndarray
+            Transformed DSV events
         """
-        events['y'] = 2*self.height - events['y']
+        events['y'] = self.height - events['y']
+        return events
 
     def determine_output_shape(self, input_shape: EventVolume) -> EventVolume:
         """Determine output shape.
@@ -212,21 +245,26 @@ class MirrorVertically(Transformation):
         Parameters
         ----------
         width: int
-            Width of the vertical axis the events are mirrored.
+           Width of the original events. 
         """
         super().__init__()
         self.width = width
 
 
-    def __call__(self, events: np.ndarray):
+    def __call__(self, events: np.ndarray) -> np.ndarray:
         """Mirror events on a vertical axis.
 
         Parameters
         ----------
         events: np.ndarray
             DVS events
+        Returns
+        -------
+        events: np.ndarray
+            Transformed DSV events
         """
-        events['x'] = 2*self.width - events['x']
+        events['x'] = self.width - events['x']
+        return events
 
     def determine_output_shape(self, input_shape: EventVolume) -> EventVolume:
         """Determine output shape.
