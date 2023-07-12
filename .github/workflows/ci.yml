@@ -71,7 +71,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        virtualenv --system-site-packages .venv 
+        poetry config virtualenvs.options.system-site-packages true
         poetry run git lfs fetch
         poetry run git lfs pull
         poetry run coverage run -m unittest discover -s tests/ -t . -vv
