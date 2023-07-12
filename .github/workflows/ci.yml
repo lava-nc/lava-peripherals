@@ -61,8 +61,8 @@ jobs:
     - name: install dependencies 
       run: |
         sudo add-apt-repository ${{ secrets.METAVISION_SETUP}} >> /dev/null
-        sudo apt update >> /dev/null
         sudo add-apt-repository ppa:deadsnakes/ppa
+        sudo apt update >> /dev/null
 
         sudo apt -y install python3.9-dev
         sudo apt -y install metavision-sdk >> /dev/null
