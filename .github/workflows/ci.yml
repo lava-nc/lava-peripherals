@@ -58,7 +58,7 @@ jobs:
       with:
         lfs: true
 
-    - name: install Metavision-sdk
+    - name: install dependencies 
       run: |
         sudo add-apt-repository ${{ secrets.METAVISION_SETUP}} >> /dev/null
         sudo apt update >> /dev/null
