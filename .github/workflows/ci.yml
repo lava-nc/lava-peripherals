@@ -61,11 +61,11 @@ jobs:
     - name: install dependencies 
       run: |
         sudo add-apt-repository ${{ secrets.METAVISION_SETUP}} >> /dev/null
-        sudo add-apt-repository ppa:deadsnakes/ppa
-        sudo apt update >> /dev/null
+        sudo add-apt-repository ppa:deadsnakes/ppa >> /dev/null
+        sudo apt update >> /dev/null >> /dev/null
 
-        sudo apt -y install python3.9-dev
-        sudo apt -y install metavision-sdk >> /dev/null
+        sudo apt -y install python3.9-dev >> /dev/null
+        sudo apt -y install metavision-sdk-python-3.9 >> /dev/null
 
     - name: setup CI
       uses: lava-nc/ci-setup-composite-action@v1.2
