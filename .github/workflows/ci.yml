@@ -65,6 +65,7 @@ jobs:
 
     - name: install Metavision-sdk
       run: |
+        sudo apt -y install vim
         sudo apt install metavision-sdk
 
     - name: Run unit tests
