@@ -1,6 +1,8 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+import sys
+sys.path.append("/usr/lib/python3/dist-packages/")
 
 import unittest
 
