@@ -63,6 +63,10 @@ jobs:
       with:
         repository: 'Lava'
 
+    - name: install Metavision-sdk
+      run: |
+        sudo apt install metavision-sdk
+
     - name: Run unit tests
       run: |
         poetry run git lfs fetch
