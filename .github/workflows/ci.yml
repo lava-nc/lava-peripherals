@@ -71,6 +71,7 @@ jobs:
 
     - name: Run unit tests
       run: |
+        ls /usr/lib/python3/dist-packages/ >> /dev/stdout | grep metavision
         export PYTHONPATH=$PYTHONPATH:/usr/lib/python3/dist-packages
         poetry run git lfs fetch
         poetry run git lfs pull
