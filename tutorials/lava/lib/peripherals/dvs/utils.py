@@ -66,6 +66,7 @@ class PyVisProcess(PyLoihiProcessModel):
         self.label = "live plot"
         self.max = 0
 
+
     def run_spk(self):
         """Receive spikes and store in an internal variable"""
         frame = self.s_in.recv()
@@ -75,17 +76,20 @@ class PyVisProcess(PyLoihiProcessModel):
         data[:, :, 0] = 255 // (frame.max() + 1) * frame[0, 1, :, :].astype(np.uint8)
         data[:, :, 1] = 255 // (frame.max() + 1) * frame[0, 0, :, :].astype(np.uint8)
         data[:, :, 2] = 255 // (frame.max() + 1) * frame[0, 1, :, :].astype(np.uint8)
-       
+
+        
         cv2.imshow(self.label, data)
         cv2.waitKey(1)
 
+
     def _stop(self):
+
         cv2.destroyWindow(self.label)
         super()._stop()
 
 
 
-class VisUpDownProcess(AbstractProcess):
+class VisSwipeProcess(AbstractProcess):
     """
     Process that receives arbitrary vectors
 
@@ -106,7 +110,7 @@ class VisUpDownProcess(AbstractProcess):
 
 
 
-@implements(proc=VisUpDownProcess, protocol=LoihiProtocol)
+@implements(proc=VisSwipeProcess, protocol=LoihiProtocol)
 @requires(CPU)
 @tag('floating_pt')
 class PyVisUpDownProcess(PyLoihiProcessModel):
@@ -122,6 +126,7 @@ class PyVisUpDownProcess(PyLoihiProcessModel):
         self.height = self.shape[2]
         self.width = self.shape[3]
         self.label = "live plot"
+
 
     def run_spk(self):
         """Receive spikes and store in an internal variable"""
@@ -162,6 +167,7 @@ class PyVisUpDownProcess(PyLoihiProcessModel):
                               2)
         
         cv2.imshow(self.label, img)
+
         cv2.waitKey(1)
 
 
