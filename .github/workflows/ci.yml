@@ -71,8 +71,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        ls /usr/lib/python3/dist-packages/ >> /dev/stdout
-        export PYTHONPATH=$PYTHONPATH:/usr/lib/python3/dist-packages
+        virtualenv --system-site-packages .venv 
         poetry run git lfs fetch
         poetry run git lfs pull
         poetry run coverage run -m unittest discover -s tests/ -t . -vv
