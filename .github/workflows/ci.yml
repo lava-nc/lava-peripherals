@@ -63,8 +63,9 @@ jobs:
         test_secret: ${{ secrets.TEST}}
         metavision_setup: ${{ secrets.METAVISION_SETUP}}
       run: |
-        echo "$env:test_secret"
-        sudo apt -y install vim
+        sudo touch /etc/apt/sources.list.d/metavision.list
+        sudo echo "$env:metavision_setup" >> /etc/apt/sources.list.d/metavision.list
+        sudo apt update
         sudo apt -y install metavision-sdk
 
     - name: setup CI
