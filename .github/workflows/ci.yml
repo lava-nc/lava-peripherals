@@ -63,8 +63,7 @@ jobs:
         test_secret: ${{ secrets.TEST}}
         metavision_setup: ${{ secrets.METAVISION_SETUP}}
       run: |
-        sudo touch /etc/apt/sources.list.d/metavision.list
-        sudo echo "$env:metavision_setup" >> /etc/apt/sources.list.d/metavision.list
+        sudo echo add-apt-repository "$env:metavision_setup"
         sudo apt update
         sudo apt -y install metavision-sdk
 
