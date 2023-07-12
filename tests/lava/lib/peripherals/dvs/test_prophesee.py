@@ -24,7 +24,10 @@ from lava.magma.core.model.py.ports import PyInPort
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps, RunContinuous
 
-from lava.lib.peripherals.dvs.prophesee import PropheseeCamera, PyPropheseeCameraModel
+from lava.lib.peripherals.dvs.prophesee import (
+    PropheseeCamera,
+    PyPropheseeCameraModel,
+)
 from lava.lib.peripherals.dvs.transform import Compose, Downsample
 from metavision_core.utils import get_sample
 from metavision_core.event_io import RawReader
@@ -46,9 +49,9 @@ class Recv(AbstractProcess):
         Size of buffer storing received data.
     """
 
-    def __init__(self,
-                 shape: ty.Tuple[int],
-                 buffer_size: ty.Optional[int] = 1):
+    def __init__(
+        self, shape: ty.Tuple[int], buffer_size: ty.Optional[int] = 1
+    ):
         super().__init__(shape=shape, buffer_size=buffer_size)
 
         self.buffer = Var(shape=(buffer_size,) + shape, init=0)
@@ -59,6 +62,7 @@ class Recv(AbstractProcess):
 @requires(CPU)
 class PyRecvProcModel(PyLoihiProcessModel):
     """Receives dense data from PyInPort and stores it in a Var."""
+
     buffer: np.ndarray = LavaPyType(np.ndarray, np.float32)
     in_port: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float32)
 
@@ -68,8 +72,8 @@ class PyRecvProcModel(PyLoihiProcessModel):
 
     def run_spk(self) -> None:
         data = self.in_port.recv()
-        self.buffer[
-            (self.time_step - 1) % self._buffer_size] = data
+        self.buffer[(self.time_step - 1) % self._buffer_size] = data
+
 
 class TestPropheseeCamera(unittest.TestCase):
     def test_init(self):
@@ -80,9 +84,11 @@ class TestPropheseeCamera(unittest.TestCase):
         height, width = reader.get_size()
         del reader
 
-        camera = PropheseeCamera(device=SEQUENCE_FILENAME_RAW,
-                                 sensor_shape=(height, width),
-                                 num_output_time_bins=num_output_time_bins)
+        camera = PropheseeCamera(
+            device=SEQUENCE_FILENAME_RAW,
+            sensor_shape=(height, width),
+            num_output_time_bins=num_output_time_bins,
+        )
 
         self.assertIsInstance(camera, PropheseeCamera)
 
@@ -103,19 +109,25 @@ class TestPropheseeCamera(unittest.TestCase):
         biases = {"bias_diff": 80}
 
         with self.assertRaises(ValueError):
-            PropheseeCamera(device=SEQUENCE_FILENAME_RAW,
-                            sensor_shape=(height, width),
-                            max_events_per_dt=max_events_per_dt)
+            PropheseeCamera(
+                device=SEQUENCE_FILENAME_RAW,
+                sensor_shape=(height, width),
+                max_events_per_dt=max_events_per_dt,
+            )
 
         with self.assertRaises(ValueError):
-            PropheseeCamera(device=SEQUENCE_FILENAME_RAW,
-                            sensor_shape=(height, width),
-                            num_output_time_bins=num_output_time_bins)
+            PropheseeCamera(
+                device=SEQUENCE_FILENAME_RAW,
+                sensor_shape=(height, width),
+                num_output_time_bins=num_output_time_bins,
+            )
 
         with self.assertRaises(ValueError):
-            PropheseeCamera(device=SEQUENCE_FILENAME_RAW,
-                            sensor_shape=(height, width),
-                            biases=biases)
+            PropheseeCamera(
+                device=SEQUENCE_FILENAME_RAW,
+                sensor_shape=(height, width),
+                biases=biases,
+            )
 
 
 class TestPyPropheseeCameraModel(unittest.TestCase):
@@ -134,13 +146,19 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         )
         num_output_time_bins = 2
 
-        proc_params = {"shape": (num_output_time_bins, 2, height, width),
-                       "device": SEQUENCE_FILENAME_RAW,
-                       "biases": None,
-                       "filters": [ActivityNoiseFilterAlgorithm(width=width, height=height, threshold=1000)],
-                       "max_events_per_dt": 10 ** 8,
-                       "transformations": transformations,
-                       "num_output_time_bins": num_output_time_bins}
+        proc_params = {
+            "shape": (num_output_time_bins, 2, height, width),
+            "device": SEQUENCE_FILENAME_RAW,
+            "biases": None,
+            "filters": [
+                ActivityNoiseFilterAlgorithm(
+                    width=width, height=height, threshold=1000
+                )
+            ],
+            "max_events_per_dt": 10**8,
+            "transformations": transformations,
+            "num_output_time_bins": num_output_time_bins,
+        }
 
         pm = PyPropheseeCameraModel(proc_params)
 
@@ -155,8 +173,9 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
 
         num_steps = 2
 
-        camera = PropheseeCamera(device=SEQUENCE_FILENAME_RAW,
-                                 sensor_shape=(height, width))
+        camera = PropheseeCamera(
+            device=SEQUENCE_FILENAME_RAW, sensor_shape=(height, width)
+        )
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
@@ -168,8 +187,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         """Test that running a PropheseeCamera works using a camera."""
         num_steps = 2
 
-        camera = PropheseeCamera(device="",
-                                 sensor_shape=(720, 1280))
+        camera = PropheseeCamera(device="", sensor_shape=(720, 1280))
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
@@ -181,16 +199,18 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         """Test that setting biases works"""
 
         num_steps = 2
-        biases = {'bias_diff': 80,
-                  'bias_diff_off': 25,
-                  'bias_diff_on': 140,
-                  'bias_fo': 74,
-                  'bias_hpf': 0,
-                  'bias_refr': 68, }
+        biases = {
+            "bias_diff": 80,
+            "bias_diff_off": 25,
+            "bias_diff_on": 140,
+            "bias_fo": 74,
+            "bias_hpf": 0,
+            "bias_refr": 68,
+        }
 
-        camera = PropheseeCamera(device="",
-                                 biases=biases,
-                                 sensor_shape=(720, 1280))
+        camera = PropheseeCamera(
+            device="", biases=biases, sensor_shape=(720, 1280)
+        )
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
@@ -205,11 +225,17 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         del reader
 
         num_steps = 2
-        filters = [ActivityNoiseFilterAlgorithm(width=width, height=height, threshold=1000)]
+        filters = [
+            ActivityNoiseFilterAlgorithm(
+                width=width, height=height, threshold=1000
+            )
+        ]
 
-        camera = PropheseeCamera(device=SEQUENCE_FILENAME_RAW,
-                                 sensor_shape=(height, width),
-                                 filters=filters)
+        camera = PropheseeCamera(
+            device=SEQUENCE_FILENAME_RAW,
+            sensor_shape=(height, width),
+            filters=filters,
+        )
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
@@ -229,9 +255,11 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
                 Downsample(factor=0.5),
             ]
         )
-        camera = PropheseeCamera(device=SEQUENCE_FILENAME_RAW,
-                                 sensor_shape=(height, width),
-                                 transformations=transformations)
+        camera = PropheseeCamera(
+            device=SEQUENCE_FILENAME_RAW,
+            sensor_shape=(height, width),
+            transformations=transformations,
+        )
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
@@ -253,9 +281,11 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
             ]
         )
 
-        camera = PropheseeCamera(device=SEQUENCE_FILENAME_RAW,
-                                 sensor_shape=(height, width),
-                                 transformations=transformations)
+        camera = PropheseeCamera(
+            device=SEQUENCE_FILENAME_RAW,
+            sensor_shape=(height, width),
+            transformations=transformations,
+        )
 
         recv = Recv(shape=camera.s_out.shape, buffer_size=num_steps)
 
@@ -270,15 +300,16 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         self.assertTrue(np.any(recv_data > 0))
 
     def test_pause(self):
-        """Test pausing the network does not cause any harm. 
+        """Test pausing the network does not cause any harm.
         Data will get droped for the pause duration."""
 
         reader = RawReader(SEQUENCE_FILENAME_RAW)
         height, width = reader.get_size()
         del reader
 
-        camera = PropheseeCamera(device=SEQUENCE_FILENAME_RAW,
-                                 sensor_shape=(height, width))
+        camera = PropheseeCamera(
+            device=SEQUENCE_FILENAME_RAW, sensor_shape=(height, width)
+        )
 
         run_condition = RunContinuous()
         run_cfg = Loihi2SimCfg()
@@ -289,4 +320,3 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         camera.run(condition=run_condition, run_cfg=run_cfg)
         time.sleep(0.1)
         camera.stop()
-

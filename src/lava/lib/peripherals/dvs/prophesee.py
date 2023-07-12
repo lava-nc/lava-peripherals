@@ -3,11 +3,12 @@
 # See: https://spdx.org/licenses/
 
 import sys
+
 try:
     import metavision_core
 except ImportError:
     print("Need `metavision` library installed.", file=sys.stderr)
-    exit(1)  
+    exit(1)
 
 import numpy as np
 import time
@@ -17,7 +18,10 @@ import typing as ty
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps, RunContinuous
 from lava.magma.core.decorator import implements, requires, tag
-from lava.magma.core.model.py.model import PyLoihiProcessModel, PyAsyncProcessModel
+from lava.magma.core.model.py.model import (
+    PyLoihiProcessModel,
+    PyAsyncProcessModel,
+)
 from lava.magma.core.model.py.ports import PyOutPort, PyInPort
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.process.ports.ports import OutPort, InPort
@@ -25,7 +29,7 @@ from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-import math  
+import math
 import inspect
 from metavision_core.event_io import RawReader
 from metavision_ml.preprocessing.event_to_tensor import histo_quantized
@@ -33,44 +37,55 @@ from metavision_ml.preprocessing.event_to_tensor import histo_quantized
 from lava.lib.peripherals.dvs.transform import Compose, EventVolume
 import warnings
 
+
 class PropheseeCamera(AbstractProcess):
     """
-    Process that receives events from Prophesee device and sends them out as a histogram. 
+    Process that receives events from Prophesee device and sends them out as a
+    histogram.
 
     Parameters
     ----------
     device: str
-        String to filename if reading from a RAW file or empty string for using a camera.
+        String to filename if reading from a RAW file or empty string for using
+        a camera.
     biases: dict
         Dictionary of biases for the DVS Camera.
     filters: list
-        List containing metavision filters. 
+        List containing metavision filters.
     max_events_per_dt: int
         Maximum events that can be buffered in each timestep.
     transformations: Compose
-        Tonic transformations to be applied to the events before sending them out.
+        Tonic transformations to be applied to the events before sending them
+        out.
     num_output_time_bins: int
         The number of output time bins to use for the ToFrame transformation.
     """
 
-    def __init__(self,
-                 sensor_shape: tuple,
-                 device: str,
-                 biases: dict = None,
-                 filters: list = [],
-                 max_events_per_dt: int = 10 ** 8,
-                 transformations: Compose = None,
-                 num_output_time_bins: int = 1,
-                 out_shape: tuple = None,
-                 ):
-
+    def __init__(
+        self,
+        sensor_shape: tuple,
+        device: str,
+        biases: dict = None,
+        filters: list = [],
+        max_events_per_dt: int = 10**8,
+        transformations: Compose = None,
+        num_output_time_bins: int = 1,
+        out_shape: tuple = None,
+    ):
         if not isinstance(max_events_per_dt, int) or max_events_per_dt < 0:
-            raise ValueError("max_events_per_dt must be a positive integer value.")
+            raise ValueError(
+                "max_events_per_dt must be a positive integer value."
+            )
 
-        if not isinstance(num_output_time_bins, int) or num_output_time_bins < 0:
-            raise ValueError("num_output_time_bins must be a positive integer value.")
+        if (
+            not isinstance(num_output_time_bins, int)
+            or num_output_time_bins < 0
+        ):
+            raise ValueError(
+                "num_output_time_bins must be a positive integer value."
+            )
 
-        if not biases is None and not device == "":
+        if biases is not None and not device == "":
             raise ValueError("Cant set biases if reading from file.")
 
         self.device = device
@@ -89,18 +104,27 @@ class PropheseeCamera(AbstractProcess):
         else:
             event_shape = EventVolume(height=height, width=width, polarities=2)
             if transformations is not None:
-                event_shape = self.transformations.determine_output_shape(event_shape)
-            self.shape = (num_output_time_bins,
-                          event_shape.polarities,
-                          event_shape.height,
-                          event_shape.width)
+                event_shape = self.transformations.determine_output_shape(
+                    event_shape
+                )
+            self.shape = (
+                num_output_time_bins,
+                event_shape.polarities,
+                event_shape.height,
+                event_shape.width,
+            )
 
         # Check whether provided transformation is valid
         if self.transformations is not None:
             try:
                 # Generate some artificial data
                 n_random_spikes = 1000
-                test_data = np.zeros(n_random_spikes, dtype=np.dtype([("y", int), ("x", int), ("p", int), ("t", int)]))
+                test_data = np.zeros(
+                    n_random_spikes,
+                    dtype=np.dtype(
+                        [("y", int), ("x", int), ("p", int), ("t", int)]
+                    ),
+                )
                 test_data["x"] = np.random.rand(n_random_spikes) * width
                 test_data["y"] = np.random.rand(n_random_spikes) * height
                 test_data["p"] = np.random.rand(n_random_spikes) * 2
@@ -110,52 +134,71 @@ class PropheseeCamera(AbstractProcess):
                 self.transformations(test_data)
                 if len(test_data) > 0:
                     volume = np.zeros(self.shape, dtype=np.uint8)
-                    histo_quantized(test_data, volume, np.max(test_data['t']))
+                    histo_quantized(test_data, volume, np.max(test_data["t"]))
 
             except Exception:
-                raise Exception("Your transformation is not compatible with the provided data.")
+                raise Exception(
+                    "Your transformation is not compatible with the provided \
+                    data."
+                )
 
         self.s_out = OutPort(shape=self.shape)
 
-        super().__init__(shape=self.shape,
-                         biases=self.biases,
-                         device=self.device,
-                         filters=self.filters,
-                         max_events_per_dt=self.max_events_per_dt,
-                         transformations=self.transformations,
-                         num_output_time_bins=self.num_output_time_bins)
+        super().__init__(
+            shape=self.shape,
+            biases=self.biases,
+            device=self.device,
+            filters=self.filters,
+            max_events_per_dt=self.max_events_per_dt,
+            transformations=self.transformations,
+            num_output_time_bins=self.num_output_time_bins,
+        )
 
 
 @implements(proc=PropheseeCamera, protocol=LoihiProtocol)
 @requires(CPU)
-@tag('floating_pt')
+@tag("floating_pt")
 class PyPropheseeCameraModel(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
-        self.shape = proc_params['shape']
-        self.num_output_time_bins, self.polarities, self.height, self.width = self.shape
-        self.device = proc_params['device']
-        self.filters = proc_params['filters']
-        self.max_events_per_dt = proc_params['max_events_per_dt']
-        self.biases = proc_params['biases']
-        self.transformations = proc_params['transformations']
+        self.shape = proc_params["shape"]
+        (
+            self.num_output_time_bins,
+            self.polarities,
+            self.height,
+            self.width,
+        ) = self.shape
+        self.device = proc_params["device"]
+        self.filters = proc_params["filters"]
+        self.max_events_per_dt = proc_params["max_events_per_dt"]
+        self.biases = proc_params["biases"]
+        self.transformations = proc_params["transformations"]
 
         self.reader = RawReader(self.device, max_events=self.max_events_per_dt)
 
-        if not self.biases is None:
+        if self.biases is not None:
             # Setting Biases for DVS camera
             device_biases = self.reader.device.get_i_ll_biases()
             for k, v in self.biases.items():
                 device_biases.set(k, v)
-     
-        self.volume = np.zeros((self.num_output_time_bins, self.polarities, self.height, self.width), dtype=np.uint8)
+
+        self.volume = np.zeros(
+            (
+                self.num_output_time_bins,
+                self.polarities,
+                self.height,
+                self.width,
+            ),
+            dtype=np.uint8,
+        )
         self.t_pause = time.time_ns()
         self.t_last_iteration = time.time_ns()
 
     def run_spk(self):
-        """Load events from DVS, apply filters and transformations and send spikes as frame """
+        """Load events from DVS, apply filters and transformations and send
+        spikes as frame"""
 
         # Time passed since last iteration
         t_now = time.time_ns()
@@ -163,7 +206,9 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
         # Load new events since last iteration
         if self.t_pause > self.t_last_iteration:
             # Runtime was paused in the meantime
-            delta_t = np.max([10000, (self.t_pause - self.t_last_iteration) // 1000])
+            delta_t = np.max(
+                [10000, (self.t_pause - self.t_last_iteration) // 1000]
+            )
             delta_t_drop = np.max([10000, (t_now - self.t_pause) // 1000])
 
             events = self.reader.load_delta_t(delta_t)
@@ -183,7 +228,7 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
             events = events.numpy()
 
         # Transform events
-        if not self.transformations is None and len(events) > 0:
+        if self.transformations is not None and len(events) > 0:
             self.transformations(events)
 
         # Transform to frame
