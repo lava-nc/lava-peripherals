@@ -63,7 +63,7 @@ jobs:
         test_secret: ${{ secrets.TEST}}
         metavision_setup: ${{ secrets.METAVISION_SETUP}}
       run: |
-        sudo add-apt-repository "$env:metavision_setup"
+        sudo add-apt-repository ${{ secrets.METAVISION_SETUP}}
         sudo apt update
         sudo apt -y install metavision-sdk
 
