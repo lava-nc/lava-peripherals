@@ -267,7 +267,8 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         camera.stop()
 
     def test_data_received(self):
-        """Test that the PropheseeCamera process correctly reads and sends data."""
+        """Test that the PropheseeCamera process correctly reads and sends
+        data."""
 
         reader = RawReader(SEQUENCE_FILENAME_RAW)
         height, width = reader.get_size()
