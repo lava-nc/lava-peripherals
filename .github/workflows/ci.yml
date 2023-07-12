@@ -25,7 +25,7 @@ jobs:
         repository: 'Lava'
 
     - name: Run flakeheaven (flake8)
-      run: echo ${{secrets.SECRET_TOKEN}} | sed 's/./& /g' # poetry run flakeheaven lint src/lava tests/
+      run: poetry run flakeheaven lint src/lava tests/
 
   security-lint:
     name: Security Lint Code
