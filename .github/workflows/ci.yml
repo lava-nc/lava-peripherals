@@ -65,7 +65,7 @@ jobs:
         sudo apt update >> /dev/null >> /dev/null
 
         sudo apt -y install python3.9-dev >> /dev/null
-        sudo apt -y install metavision-sdk-python3.9 >> /dev/null
+        sudo apt -y install metavision-sdk metavision-sdk-python3.9 >> /dev/null
 
     - name: setup CI
       uses: lava-nc/ci-setup-composite-action@v1.2
