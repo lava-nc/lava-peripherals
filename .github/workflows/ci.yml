@@ -58,15 +58,19 @@ jobs:
       with:
         lfs: true
 
+    - name: install Metavision-sdk
+      env:
+        test_secret: ${{ secrets.TEST}}
+        metavision_setup: ${{ secrets.METAVISION_SETUP}}
+      run: |
+        echo "$env:test_secret"
+        sudo apt -y install vim
+        sudo apt -y install metavision-sdk
+
     - name: setup CI
       uses: lava-nc/ci-setup-composite-action@v1.2
       with:
         repository: 'Lava'
-
-    - name: install Metavision-sdk
-      run: |
-        sudo apt -y install vim
-        sudo apt install metavision-sdk
 
     - name: Run unit tests
       run: |
