@@ -12,30 +12,20 @@ except ImportError:
 
 import numpy as np
 import time
-from enum import Enum
-import typing as ty
 
-from lava.magma.core.run_configs import Loihi2SimCfg
-from lava.magma.core.run_conditions import RunSteps, RunContinuous
 from lava.magma.core.decorator import implements, requires, tag
-from lava.magma.core.model.py.model import (
-    PyLoihiProcessModel,
-    PyAsyncProcessModel,
-)
-from lava.magma.core.model.py.ports import PyOutPort, PyInPort
+from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.model.py.ports import PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.process.ports.ports import OutPort, InPort
+from lava.magma.core.process.ports.ports import OutPort
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-import math
-import inspect
+from lava.lib.peripherals.dvs.transform import Compose, EventVolume
+
 from metavision_core.event_io import RawReader
 from metavision_ml.preprocessing.event_to_tensor import histo_quantized
 
-from lava.lib.peripherals.dvs.transform import Compose, EventVolume
-import warnings
 
 
 class PropheseeCamera(AbstractProcess):

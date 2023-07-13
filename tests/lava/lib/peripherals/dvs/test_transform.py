@@ -2,10 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from multiprocessing import Event
 import unittest
 import numpy as np
-import os
 import copy
 
 from lava.lib.peripherals.dvs.transform import (
