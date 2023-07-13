@@ -27,7 +27,6 @@ from metavision_core.event_io import RawReader
 from metavision_ml.preprocessing.event_to_tensor import histo_quantized
 
 
-
 class PropheseeCamera(AbstractProcess):
     """
     Process that receives events from Prophesee device and sends them out as a

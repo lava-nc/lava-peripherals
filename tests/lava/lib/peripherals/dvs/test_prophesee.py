@@ -49,9 +49,7 @@ class Recv(AbstractProcess):
         Size of buffer storing received data.
     """
 
-    def __init__(
-        self, shape: ty.Tuple[int], buffer_size: ty.Optional[int] = 1
-    ):
+    def __init__(self, shape: ty.Tuple[int], buffer_size: ty.Optional[int] = 1):
         super().__init__(shape=shape, buffer_size=buffer_size)
 
         self.buffer = Var(shape=(buffer_size,) + shape, init=0)

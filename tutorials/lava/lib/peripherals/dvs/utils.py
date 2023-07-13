@@ -87,5 +87,3 @@ class PyVisProcess(PyLoihiProcessModel):
     def _stop(self):
         cv2.destroyWindow(self.label)
         super()._stop()
-
-

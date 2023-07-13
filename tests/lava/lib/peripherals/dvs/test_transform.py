@@ -208,7 +208,5 @@ class TestCompose(unittest.TestCase):
         output_shape = transforms.determine_output_shape(event_volume)
 
         self.assertEqual(output_shape.width, int(width) * downsampling_factor)
-        self.assertEqual(
-            output_shape.height, int(height) * downsampling_factor
-        )
+        self.assertEqual(output_shape.height, int(height) * downsampling_factor)
         self.assertEqual(output_shape.polarities, 1)
