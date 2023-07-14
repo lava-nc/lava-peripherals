@@ -87,7 +87,7 @@ class TestPropheseeCamera(unittest.TestCase):
         del reader
 
         camera = PropheseeCamera(
-            device=SEQUENCE_FILENAME_RAW,
+            filename=SEQUENCE_FILENAME_RAW,
             sensor_shape=(height, width),
             num_output_time_bins=num_output_time_bins,
         )
@@ -112,21 +112,21 @@ class TestPropheseeCamera(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             PropheseeCamera(
-                device=SEQUENCE_FILENAME_RAW,
+                filename=SEQUENCE_FILENAME_RAW,
                 sensor_shape=(height, width),
                 max_events_per_dt=max_events_per_dt,
             )
 
         with self.assertRaises(ValueError):
             PropheseeCamera(
-                device=SEQUENCE_FILENAME_RAW,
+                filename=SEQUENCE_FILENAME_RAW,
                 sensor_shape=(height, width),
                 num_output_time_bins=num_output_time_bins,
             )
 
         with self.assertRaises(ValueError):
             PropheseeCamera(
-                device=SEQUENCE_FILENAME_RAW,
+                filename=SEQUENCE_FILENAME_RAW,
                 sensor_shape=(height, width),
                 biases=biases,
             )
@@ -150,7 +150,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
 
         proc_params = {
             "shape": (num_output_time_bins, 2, height, width),
-            "device": SEQUENCE_FILENAME_RAW,
+            "filename": SEQUENCE_FILENAME_RAW,
             "biases": None,
             "filters": [
                 ActivityNoiseFilterAlgorithm(
@@ -176,7 +176,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         num_steps = 2
 
         camera = PropheseeCamera(
-            device=SEQUENCE_FILENAME_RAW, sensor_shape=(height, width)
+            filename=SEQUENCE_FILENAME_RAW, sensor_shape=(height, width)
         )
 
         run_condition = RunSteps(num_steps=num_steps)
@@ -194,7 +194,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         num_steps = 2
 
         camera = PropheseeCamera(
-            device=SEQUENCE_FILENAME_DAT, sensor_shape=(height, width)
+            filename=SEQUENCE_FILENAME_DAT, sensor_shape=(height, width)
         )
 
         run_condition = RunSteps(num_steps=num_steps)
@@ -207,7 +207,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         """Test that running a PropheseeCamera works using a camera."""
         num_steps = 2
 
-        camera = PropheseeCamera(device="", sensor_shape=(720, 1280))
+        camera = PropheseeCamera(filename="", sensor_shape=(720, 1280))
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
@@ -229,7 +229,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         }
 
         camera = PropheseeCamera(
-            device="", biases=biases, sensor_shape=(720, 1280)
+            filename="", biases=biases, sensor_shape=(720, 1280)
         )
 
         run_condition = RunSteps(num_steps=num_steps)
@@ -252,7 +252,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         ]
 
         camera = PropheseeCamera(
-            device=SEQUENCE_FILENAME_RAW,
+            filename=SEQUENCE_FILENAME_RAW,
             sensor_shape=(height, width),
             filters=filters,
         )
@@ -276,7 +276,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
             ]
         )
         camera = PropheseeCamera(
-            device=SEQUENCE_FILENAME_RAW,
+            filename=SEQUENCE_FILENAME_RAW,
             sensor_shape=(height, width),
             transformations=transformations,
         )
@@ -303,7 +303,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         )
 
         camera = PropheseeCamera(
-            device=SEQUENCE_FILENAME_RAW,
+            filename=SEQUENCE_FILENAME_RAW,
             sensor_shape=(height, width),
             transformations=transformations,
         )
@@ -329,7 +329,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         del reader
 
         camera = PropheseeCamera(
-            device=SEQUENCE_FILENAME_RAW, sensor_shape=(height, width)
+            filename=SEQUENCE_FILENAME_RAW, sensor_shape=(height, width)
         )
 
         run_condition = RunContinuous()

@@ -34,7 +34,7 @@ class PropheseeCamera(AbstractProcess):
 
     Parameters
     ----------
-    device: str
+    filename: str
         String to filename if reading from a RAW/DAT file or empty string for
         using a camera.
     biases: dict
@@ -53,7 +53,7 @@ class PropheseeCamera(AbstractProcess):
     def __init__(
         self,
         sensor_shape: tuple,
-        device: str,
+        filename: str = "",
         biases: dict = None,
         filters: list = [],
         max_events_per_dt: int = 10**8,
@@ -74,10 +74,10 @@ class PropheseeCamera(AbstractProcess):
                 "num_output_time_bins must be a positive integer value."
             )
 
-        if biases is not None and not device == "":
+        if biases is not None and not filename == "":
             raise ValueError("Cant set biases if reading from file.")
 
-        self.device = device
+        self.filename = filename
         self.biases = biases
 
         self.max_events_per_dt = max_events_per_dt
@@ -136,7 +136,7 @@ class PropheseeCamera(AbstractProcess):
         super().__init__(
             shape=self.shape,
             biases=self.biases,
-            device=self.device,
+            filename=self.filename,
             filters=self.filters,
             max_events_per_dt=self.max_events_per_dt,
             transformations=self.transformations,
@@ -159,16 +159,16 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
             self.height,
             self.width,
         ) = self.shape
-        self.device = proc_params["device"]
+        self.filename = proc_params["filename"]
         self.filters = proc_params["filters"]
         self.max_events_per_dt = proc_params["max_events_per_dt"]
         self.biases = proc_params["biases"]
         self.transformations = proc_params["transformations"]
 
-        if self.device.split('.')[-1] == 'dat':
-            self.reader = EventDatReader(self.device)
+        if self.filename.split('.')[-1] == 'dat':
+            self.reader = EventDatReader(self.filename)
         else:
-            self.reader = RawReader(self.device,
+            self.reader = RawReader(self.filename,
                                     max_events=self.max_events_per_dt)
 
         if self.biases is not None:

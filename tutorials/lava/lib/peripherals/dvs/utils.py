@@ -38,9 +38,9 @@ import logging
 from scipy.sparse import csr_matrix
 
 
-class VisProcess(AbstractProcess):
+class EventVisualizer(AbstractProcess):
     """
-    Process that receives arbitrary vectors
+    Process that receives arbitrary vectors and visualizes them using CV.
 
     Parameters
     ----------
@@ -53,10 +53,10 @@ class VisProcess(AbstractProcess):
         self.s_in = InPort(shape=shape)
 
 
-@implements(proc=VisProcess, protocol=LoihiProtocol)
+@implements(proc=EventVisualizer, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
-class PyVisProcess(PyLoihiProcessModel):
+class PyEventVisualizerModel(PyLoihiProcessModel):
     s_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float32)
 
     def __init__(self, proc_params):
