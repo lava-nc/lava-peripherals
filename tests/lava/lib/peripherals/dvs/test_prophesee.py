@@ -30,12 +30,16 @@ from lava.lib.peripherals.dvs.prophesee import (
 )
 from lava.lib.peripherals.dvs.transform import Compose, Downsample
 from metavision_core.utils import get_sample
-from metavision_core.event_io import RawReader
+from metavision_core.event_io import RawReader, EventDatReader
 from metavision_sdk_cv import ActivityNoiseFilterAlgorithm
 
 SEQUENCE_FILENAME_RAW = "sparklers.raw"
 get_sample(SEQUENCE_FILENAME_RAW)
 assert os.path.isfile(SEQUENCE_FILENAME_RAW)
+
+SEQUENCE_FILENAME_DAT = "blinking_leds_td.dat"
+get_sample(SEQUENCE_FILENAME_DAT)
+assert os.path.isfile(SEQUENCE_FILENAME_DAT)
 
 
 class Recv(AbstractProcess):
@@ -173,6 +177,24 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
 
         camera = PropheseeCamera(
             device=SEQUENCE_FILENAME_RAW, sensor_shape=(height, width)
+        )
+
+        run_condition = RunSteps(num_steps=num_steps)
+        run_cfg = Loihi2SimCfg()
+        camera.run(condition=run_condition, run_cfg=run_cfg)
+        camera.stop()
+
+    def test_base_functionality_dat_file(self):
+        """Test that running a PropheseeCamera works using a dat data file."""
+        # The DAT file should have the same resolution as the RAW file
+        reader = RawReader(SEQUENCE_FILENAME_RAW)
+        height, width = reader.get_size()
+        del reader
+
+        num_steps = 2
+
+        camera = PropheseeCamera(
+            device=SEQUENCE_FILENAME_DAT, sensor_shape=(height, width)
         )
 
         run_condition = RunSteps(num_steps=num_steps)

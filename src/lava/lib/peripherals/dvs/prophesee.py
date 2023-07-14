@@ -23,7 +23,7 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.lib.peripherals.dvs.transform import Compose, EventVolume
 
-from metavision_core.event_io import RawReader
+from metavision_core.event_io import RawReader, EventDatReader
 from metavision_ml.preprocessing.event_to_tensor import histo_quantized
 
 
@@ -35,8 +35,8 @@ class PropheseeCamera(AbstractProcess):
     Parameters
     ----------
     device: str
-        String to filename if reading from a RAW file or empty string for using
-        a camera.
+        String to filename if reading from a RAW/DAT file or empty string for
+        using a camera.
     biases: dict
         Dictionary of biases for the DVS Camera.
     filters: list
@@ -165,7 +165,11 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
         self.biases = proc_params["biases"]
         self.transformations = proc_params["transformations"]
 
-        self.reader = RawReader(self.device, max_events=self.max_events_per_dt)
+        if self.device.split('.')[-1] == 'dat':
+            self.reader = EventDatReader(self.device)
+        else:
+            self.reader = RawReader(self.device,
+                                    max_events=self.max_events_per_dt)
 
         if self.biases is not None:
             # Setting Biases for DVS camera
