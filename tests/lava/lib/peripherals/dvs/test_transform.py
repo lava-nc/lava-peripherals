@@ -2,13 +2,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-from multiprocessing import Event
 import unittest
 import numpy as np
-import os
 import copy
 
-from lava.lib.peripherals.dvs.transform import (
+from lava.lib.peripherals.dvs.transformation import (
     Downsample,
     Compose,
     EventVolume,
@@ -210,7 +208,5 @@ class TestCompose(unittest.TestCase):
         output_shape = transforms.determine_output_shape(event_volume)
 
         self.assertEqual(output_shape.width, int(width) * downsampling_factor)
-        self.assertEqual(
-            output_shape.height, int(height) * downsampling_factor
-        )
+        self.assertEqual(output_shape.height, int(height) * downsampling_factor)
         self.assertEqual(output_shape.polarities, 1)

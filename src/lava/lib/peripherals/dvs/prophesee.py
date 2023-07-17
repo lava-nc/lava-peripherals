@@ -12,30 +12,19 @@ except ImportError:
 
 import numpy as np
 import time
-from enum import Enum
-import typing as ty
 
-from lava.magma.core.run_configs import Loihi2SimCfg
-from lava.magma.core.run_conditions import RunSteps, RunContinuous
 from lava.magma.core.decorator import implements, requires, tag
-from lava.magma.core.model.py.model import (
-    PyLoihiProcessModel,
-    PyAsyncProcessModel,
-)
-from lava.magma.core.model.py.ports import PyOutPort, PyInPort
+from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.model.py.ports import PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.process.ports.ports import OutPort, InPort
+from lava.magma.core.process.ports.ports import OutPort
 from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.variable import Var
 from lava.magma.core.resources import CPU
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-import math
-import inspect
-from metavision_core.event_io import RawReader
-from metavision_ml.preprocessing.event_to_tensor import histo_quantized
+from lava.lib.peripherals.dvs.transformation import Compose, EventVolume
 
-from lava.lib.peripherals.dvs.transform import Compose, EventVolume
-import warnings
+from metavision_core.event_io import RawReader, EventDatReader
+from metavision_ml.preprocessing.event_to_tensor import histo_quantized
 
 
 class PropheseeCamera(AbstractProcess):
@@ -45,9 +34,9 @@ class PropheseeCamera(AbstractProcess):
 
     Parameters
     ----------
-    device: str
-        String to filename if reading from a RAW file or empty string for using
-        a camera.
+    filename: str
+        String to filename if reading from a RAW/DAT file or empty string for
+        using a camera.
     biases: dict
         Dictionary of biases for the DVS Camera.
     filters: list
@@ -55,8 +44,7 @@ class PropheseeCamera(AbstractProcess):
     max_events_per_dt: int
         Maximum events that can be buffered in each timestep.
     transformations: Compose
-        Tonic transformations to be applied to the events before sending them
-        out.
+        Transformations to be applied to the events before sending them out.
     num_output_time_bins: int
         The number of output time bins to use for the ToFrame transformation.
     """
@@ -64,7 +52,7 @@ class PropheseeCamera(AbstractProcess):
     def __init__(
         self,
         sensor_shape: tuple,
-        device: str,
+        filename: str = "",
         biases: dict = None,
         filters: list = [],
         max_events_per_dt: int = 10**8,
@@ -85,10 +73,10 @@ class PropheseeCamera(AbstractProcess):
                 "num_output_time_bins must be a positive integer value."
             )
 
-        if biases is not None and not device == "":
+        if biases is not None and not filename == "":
             raise ValueError("Cant set biases if reading from file.")
 
-        self.device = device
+        self.filename = filename
         self.biases = biases
 
         self.max_events_per_dt = max_events_per_dt
@@ -147,7 +135,7 @@ class PropheseeCamera(AbstractProcess):
         super().__init__(
             shape=self.shape,
             biases=self.biases,
-            device=self.device,
+            filename=self.filename,
             filters=self.filters,
             max_events_per_dt=self.max_events_per_dt,
             transformations=self.transformations,
@@ -170,13 +158,17 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
             self.height,
             self.width,
         ) = self.shape
-        self.device = proc_params["device"]
+        self.filename = proc_params["filename"]
         self.filters = proc_params["filters"]
         self.max_events_per_dt = proc_params["max_events_per_dt"]
         self.biases = proc_params["biases"]
         self.transformations = proc_params["transformations"]
 
-        self.reader = RawReader(self.device, max_events=self.max_events_per_dt)
+        if self.filename.split('.')[-1] == 'dat':
+            self.reader = EventDatReader(self.filename)
+        else:
+            self.reader = RawReader(self.filename,
+                                    max_events=self.max_events_per_dt)
 
         if self.biases is not None:
             # Setting Biases for DVS camera

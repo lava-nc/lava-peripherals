@@ -1,6 +1,7 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+
 import unittest
 
 import numpy as np
@@ -28,14 +29,26 @@ from lava.lib.peripherals.dvs.prophesee import (
     PropheseeCamera,
     PyPropheseeCameraModel,
 )
-from lava.lib.peripherals.dvs.transform import Compose, Downsample
+from lava.lib.peripherals.dvs.transformation import Compose, Downsample
 from metavision_core.utils import get_sample
-from metavision_core.event_io import RawReader
+from metavision_core.event_io import RawReader, EventDatReader
 from metavision_sdk_cv import ActivityNoiseFilterAlgorithm
 
 SEQUENCE_FILENAME_RAW = "sparklers.raw"
 get_sample(SEQUENCE_FILENAME_RAW)
 assert os.path.isfile(SEQUENCE_FILENAME_RAW)
+
+SEQUENCE_FILENAME_DAT = "blinking_leds_td.dat"
+get_sample(SEQUENCE_FILENAME_DAT)
+assert os.path.isfile(SEQUENCE_FILENAME_DAT)
+
+# Test if camera is connected
+try:
+    reader = RawReader("")
+    del reader
+    USE_CAMERA_TESTS = True
+except OSError:
+    USE_CAMERA_TESTS = False
 
 
 class Recv(AbstractProcess):
@@ -49,9 +62,7 @@ class Recv(AbstractProcess):
         Size of buffer storing received data.
     """
 
-    def __init__(
-        self, shape: ty.Tuple[int], buffer_size: ty.Optional[int] = 1
-    ):
+    def __init__(self, shape: ty.Tuple[int], buffer_size: ty.Optional[int] = 1):
         super().__init__(shape=shape, buffer_size=buffer_size)
 
         self.buffer = Var(shape=(buffer_size,) + shape, init=0)
@@ -85,7 +96,7 @@ class TestPropheseeCamera(unittest.TestCase):
         del reader
 
         camera = PropheseeCamera(
-            device=SEQUENCE_FILENAME_RAW,
+            filename=SEQUENCE_FILENAME_RAW,
             sensor_shape=(height, width),
             num_output_time_bins=num_output_time_bins,
         )
@@ -110,21 +121,21 @@ class TestPropheseeCamera(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             PropheseeCamera(
-                device=SEQUENCE_FILENAME_RAW,
+                filename=SEQUENCE_FILENAME_RAW,
                 sensor_shape=(height, width),
                 max_events_per_dt=max_events_per_dt,
             )
 
         with self.assertRaises(ValueError):
             PropheseeCamera(
-                device=SEQUENCE_FILENAME_RAW,
+                filename=SEQUENCE_FILENAME_RAW,
                 sensor_shape=(height, width),
                 num_output_time_bins=num_output_time_bins,
             )
 
         with self.assertRaises(ValueError):
             PropheseeCamera(
-                device=SEQUENCE_FILENAME_RAW,
+                filename=SEQUENCE_FILENAME_RAW,
                 sensor_shape=(height, width),
                 biases=biases,
             )
@@ -148,7 +159,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
 
         proc_params = {
             "shape": (num_output_time_bins, 2, height, width),
-            "device": SEQUENCE_FILENAME_RAW,
+            "filename": SEQUENCE_FILENAME_RAW,
             "biases": None,
             "filters": [
                 ActivityNoiseFilterAlgorithm(
@@ -174,7 +185,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         num_steps = 2
 
         camera = PropheseeCamera(
-            device=SEQUENCE_FILENAME_RAW, sensor_shape=(height, width)
+            filename=SEQUENCE_FILENAME_RAW, sensor_shape=(height, width)
         )
 
         run_condition = RunSteps(num_steps=num_steps)
@@ -182,19 +193,37 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         camera.run(condition=run_condition, run_cfg=run_cfg)
         camera.stop()
 
-    @unittest.skip("Needs live camera")
-    def test_base_functionality_camera(self):
-        """Test that running a PropheseeCamera works using a camera."""
+    def test_base_functionality_dat_file(self):
+        """Test that running a PropheseeCamera works using a dat data file."""
+        # The DAT file should have the same resolution as the RAW file
+        reader = RawReader(SEQUENCE_FILENAME_RAW)
+        height, width = reader.get_size()
+        del reader
+
         num_steps = 2
 
-        camera = PropheseeCamera(device="", sensor_shape=(720, 1280))
+        camera = PropheseeCamera(
+            filename=SEQUENCE_FILENAME_DAT, sensor_shape=(height, width)
+        )
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
         camera.run(condition=run_condition, run_cfg=run_cfg)
         camera.stop()
 
-    @unittest.skip("Needs live camera")
+    @unittest.skipUnless(USE_CAMERA_TESTS, "Needs live camera")
+    def test_base_functionality_camera(self):
+        """Test that running a PropheseeCamera works using a camera."""
+        num_steps = 2
+
+        camera = PropheseeCamera(filename="", sensor_shape=(720, 1280))
+
+        run_condition = RunSteps(num_steps=num_steps)
+        run_cfg = Loihi2SimCfg()
+        camera.run(condition=run_condition, run_cfg=run_cfg)
+        camera.stop()
+
+    @unittest.skipUnless(USE_CAMERA_TESTS, "Needs live camera")
     def test_biases(self):
         """Test that setting biases works"""
 
@@ -209,7 +238,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         }
 
         camera = PropheseeCamera(
-            device="", biases=biases, sensor_shape=(720, 1280)
+            filename="", biases=biases, sensor_shape=(720, 1280)
         )
 
         run_condition = RunSteps(num_steps=num_steps)
@@ -232,7 +261,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         ]
 
         camera = PropheseeCamera(
-            device=SEQUENCE_FILENAME_RAW,
+            filename=SEQUENCE_FILENAME_RAW,
             sensor_shape=(height, width),
             filters=filters,
         )
@@ -256,7 +285,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
             ]
         )
         camera = PropheseeCamera(
-            device=SEQUENCE_FILENAME_RAW,
+            filename=SEQUENCE_FILENAME_RAW,
             sensor_shape=(height, width),
             transformations=transformations,
         )
@@ -283,7 +312,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         )
 
         camera = PropheseeCamera(
-            device=SEQUENCE_FILENAME_RAW,
+            filename=SEQUENCE_FILENAME_RAW,
             sensor_shape=(height, width),
             transformations=transformations,
         )
@@ -309,7 +338,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         del reader
 
         camera = PropheseeCamera(
-            device=SEQUENCE_FILENAME_RAW, sensor_shape=(height, width)
+            filename=SEQUENCE_FILENAME_RAW, sensor_shape=(height, width)
         )
 
         run_condition = RunContinuous()
