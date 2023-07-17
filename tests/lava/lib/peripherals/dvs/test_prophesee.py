@@ -1,6 +1,7 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+from http.client import TOO_MANY_REQUESTS
 import unittest
 
 import numpy as np
@@ -28,7 +29,7 @@ from lava.lib.peripherals.dvs.prophesee import (
     PropheseeCamera,
     PyPropheseeCameraModel,
 )
-from lava.lib.peripherals.dvs.transform import Compose, Downsample
+from lava.lib.peripherals.dvs.transformation import Compose, Downsample
 from metavision_core.utils import get_sample
 from metavision_core.event_io import RawReader, EventDatReader
 from metavision_sdk_cv import ActivityNoiseFilterAlgorithm
@@ -41,6 +42,13 @@ SEQUENCE_FILENAME_DAT = "blinking_leds_td.dat"
 get_sample(SEQUENCE_FILENAME_DAT)
 assert os.path.isfile(SEQUENCE_FILENAME_DAT)
 
+# Test if camera is connected
+try:
+    reader = RawReader("")
+    del reader
+    USE_CAMERA_TESTS = True
+except:
+    USE_CAMERA_TESTS = False 
 
 class Recv(AbstractProcess):
     """Process that receives arbitrary dense data and stores it in a Var.
@@ -202,7 +210,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         camera.run(condition=run_condition, run_cfg=run_cfg)
         camera.stop()
 
-    @unittest.skip("Needs live camera")
+    @unittest.skipUnless(USE_CAMERA_TESTS, "Needs live camera")
     def test_base_functionality_camera(self):
         """Test that running a PropheseeCamera works using a camera."""
         num_steps = 2
@@ -214,7 +222,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
         camera.run(condition=run_condition, run_cfg=run_cfg)
         camera.stop()
 
-    @unittest.skip("Needs live camera")
+    @unittest.skipUnless(USE_CAMERA_TESTS, "Needs live camera")
     def test_biases(self):
         """Test that setting biases works"""
 

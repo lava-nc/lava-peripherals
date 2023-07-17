@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 import copy
 
-from lava.lib.peripherals.dvs.transform import (
+from lava.lib.peripherals.dvs.transformation import (
     Downsample,
     Compose,
     EventVolume,

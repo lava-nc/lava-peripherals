@@ -21,7 +21,7 @@ from lava.magma.core.process.ports.ports import OutPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.resources import CPU
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.lib.peripherals.dvs.transform import Compose, EventVolume
+from lava.lib.peripherals.dvs.transformation import Compose, EventVolume
 
 from metavision_core.event_io import RawReader, EventDatReader
 from metavision_ml.preprocessing.event_to_tensor import histo_quantized
@@ -44,8 +44,7 @@ class PropheseeCamera(AbstractProcess):
     max_events_per_dt: int
         Maximum events that can be buffered in each timestep.
     transformations: Compose
-        Tonic transformations to be applied to the events before sending them
-        out.
+        Transformations to be applied to the events before sending them out.
     num_output_time_bins: int
         The number of output time bins to use for the ToFrame transformation.
     """
