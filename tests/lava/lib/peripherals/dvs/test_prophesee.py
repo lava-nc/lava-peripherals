@@ -47,8 +47,9 @@ try:
     reader = RawReader("")
     del reader
     USE_CAMERA_TESTS = True
-except:
-    USE_CAMERA_TESTS = False 
+except OSError:
+    USE_CAMERA_TESTS = False
+
 
 class Recv(AbstractProcess):
     """Process that receives arbitrary dense data and stores it in a Var.
