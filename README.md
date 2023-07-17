@@ -1,7 +1,8 @@
 # Lava Peripherals
 
-Lava is an open-source software framework for developing neuro-inspired applications and mapping them to neuromorphic hardware. Lava provides developers with the tools and abstractions to develop applications that fully exploit the principles of neural computation. 
-Lava-peripherals is a library that connects peripheral hardware such as cameras or robotic actuators to [Lava](http://lava-nc.org).​
+Lava-peripherals is a library to the open-source framework [Lava](http://lava-nc.org) that adds support for peripheral devices such as cameras or robotic actuators.
+Lava enables users to develop neuro-inspired applications and map them to neuromorphic hardware. It provides tools and abstractions to develop applications that fully exploit the principles of neural computation. 
+
 
 # Content
 
@@ -9,7 +10,7 @@ Lava-peripherals is a library that connects peripheral hardware such as cameras 
   - Metavision
   - Inivation (coming soon)
 - Intel RealSense cameras (coming soon)
-- Robotic actuators (coming soon)
+- Robotic actuators (to be planned)
   
 
 # Dependencies
@@ -21,11 +22,11 @@ Lava-peripherals currently requires Linux and does not support Windows or MacOS.
 Lava-peripherals is flexible with the dependency on the libraries for the peripheral hardware and requires only those to be installed which are used. 
 
 ### PropheseeCamera
-In order to run the `PropheseeCamera` Process, the [metavision-sdk](https://docs.prophesee.ai/stable/installation/index.html) is required to be installed. 
+The `PropheseeCamera` Process, requires the [metavision-sdk](https://docs.prophesee.ai/stable/installation/index.html) to be installed. 
 
 ## Python dependencies
 
-Lava-peripherals requires Python version 3.9 or newer and for installation either pip or poetry is requrired.
+Lava-peripherals requires Python version 3.9 or newer; for installation either pip or poetry is required.
 
 # Installation
 
