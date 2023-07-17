@@ -98,15 +98,17 @@ class VisSwipeProcess(AbstractProcess):
     shape: tuple, shape of the process
     """
 
-    def __init__(self, shape):
-        super().__init__(shape=shape)
+    def __init__(self, shape, direction_shape):
+        super().__init__(shape=shape,
+                         direction_shape=direction_shape)
         self.shape = shape
+        self.direction_shape = direction_shape
         self.frame_in = InPort(shape=shape)
 
-        self.up_in = InPort(shape=shape)
-        self.down_in = InPort(shape=shape)
-        self.left_in = InPort(shape=shape)
-        self.right_in = InPort(shape=shape)
+        self.up_in = InPort(shape=direction_shape)
+        self.down_in = InPort(shape=direction_shape)
+        self.left_in = InPort(shape=direction_shape)
+        self.right_in = InPort(shape=direction_shape)
 
 
 @implements(proc=VisSwipeProcess, protocol=LoihiProtocol)
@@ -122,6 +124,7 @@ class PyVisUpDownProcess(PyLoihiProcessModel):
     def __init__(self, proc_params):
         super().__init__(proc_params)
         self.shape = proc_params["shape"]
+        self.direction_shape = proc_params["direction_shape"]
         self.height = self.shape[2]
         self.width = self.shape[3]
         self.label = "live plot"
@@ -146,7 +149,7 @@ class PyVisUpDownProcess(PyLoihiProcessModel):
         ud_arrow_start = (self.width // 2, self.height // 2)
         ud_arrow_end = (
             self.width // 2,
-            self.height // 2 + int(down - up) // 10,
+            self.height // 2 + int(down - up) * 10,
         )
         ud_arrow_end = np.clip(ud_arrow_end, (0, 0), (self.width, self.height))
         img = cv2.arrowedLine(
@@ -155,7 +158,7 @@ class PyVisUpDownProcess(PyLoihiProcessModel):
 
         lr_arrow_start = (self.width // 2, self.height // 2)
         lr_arrow_end = (
-            self.width // 2 + int(right - left) // 10,
+            self.width // 2 + int(right - left) * 10,
             self.height // 2,
         )
         lr_arrow_end = np.clip(lr_arrow_end, (0, 0), (self.width, self.height))
