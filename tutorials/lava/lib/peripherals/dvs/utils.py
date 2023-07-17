@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import cv2
+import scipy
 
 import os
 from lava.magma.core.run_configs import Loihi2SimCfg, Loihi2HwCfg
@@ -137,10 +138,7 @@ class PyVisUpDownProcess(PyLoihiProcessModel):
         down = self.down_in.recv().sum()
         left = self.left_in.recv().sum()
         right = self.right_in.recv().sum()
-        # softmax = np.array([up, down, left, right])
-        # if np.sum(softmax) > 500:
-        #     up, down, left, right = (softmax / (1 + np.sum(softmax))) * 200
-        # print(softmax)
+
 
         frame = frame.sum(axis=0).sum(axis=0)
         img = np.zeros(frame.shape + (3,), np.uint8)
@@ -149,7 +147,7 @@ class PyVisUpDownProcess(PyLoihiProcessModel):
         ud_arrow_start = (self.width // 2, self.height // 2)
         ud_arrow_end = (
             self.width // 2,
-            self.height // 2 + int(down - up) * 10,
+            self.height // 2 + int(down - up) * 2,
         )
         ud_arrow_end = np.clip(ud_arrow_end, (0, 0), (self.width, self.height))
         img = cv2.arrowedLine(
@@ -158,7 +156,7 @@ class PyVisUpDownProcess(PyLoihiProcessModel):
 
         lr_arrow_start = (self.width // 2, self.height // 2)
         lr_arrow_end = (
-            self.width // 2 + int(right - left) * 10,
+            self.width // 2 + int(right - left) * 2,
             self.height // 2,
         )
         lr_arrow_end = np.clip(lr_arrow_end, (0, 0), (self.width, self.height))
