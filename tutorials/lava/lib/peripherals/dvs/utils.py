@@ -105,11 +105,12 @@ class VisSwipeProcess(AbstractProcess):
         self.shape = shape
         self.direction_shape = direction_shape
         self.frame_in = InPort(shape=shape)
+        self.direction_in = InPort(shape=direction_shape)
 
-        self.up_in = InPort(shape=direction_shape)
-        self.down_in = InPort(shape=direction_shape)
-        self.left_in = InPort(shape=direction_shape)
-        self.right_in = InPort(shape=direction_shape)
+        # self.up_in = InPort(shape=direction_shape)
+        # self.down_in = InPort(shape=direction_shape)
+        # self.left_in = InPort(shape=direction_shape)
+        # self.right_in = InPort(shape=direction_shape)
 
 
 @implements(proc=VisSwipeProcess, protocol=LoihiProtocol)
@@ -117,10 +118,12 @@ class VisSwipeProcess(AbstractProcess):
 @tag("floating_pt")
 class PyVisUpDownProcess(PyLoihiProcessModel):
     frame_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float32)
-    up_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float32)
-    down_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float32)
-    left_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float32)
-    right_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float32)
+    direction_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float32)
+    
+    # up_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float32)
+    # down_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float32)
+    # left_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float32)
+    # right_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.float32)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
@@ -132,42 +135,51 @@ class PyVisUpDownProcess(PyLoihiProcessModel):
 
     def run_spk(self):
         """Receive spikes and store in an internal variable"""
+        print("VIS recv") 
         frame = self.frame_in.recv()
+        direction_in = self.direction_in.recv()
+        n_per_direction = self.direction_shape[0] // 4
+        up = direction_in[:n_per_direction].sum()
+        down = direction_in[n_per_direction:2*n_per_direction].sum()
+        left = direction_in[2*n_per_direction:3*n_per_direction].sum()
+        right = direction_in[3*n_per_direction:].sum()
 
-        up = self.up_in.recv().sum()
-        down = self.down_in.recv().sum()
-        left = self.left_in.recv().sum()
-        right = self.right_in.recv().sum()
+        print("VIS", up, down, left, right)
 
+        # up = self.up_in.recv().sum()
+        # down = self.down_in.recv().sum()
+        # left = self.left_in.recv().sum()
+        # right = self.right_in.recv().sum()
+        # print(direction_in.sum())
 
-        frame = frame.sum(axis=0).sum(axis=0)
-        img = np.zeros(frame.shape + (3,), np.uint8)
-        img[:, :, 1] = 255 // (frame.max() + 1) * frame.astype(np.uint8)
+        #frame = frame.sum(axis=0).sum(axis=0)
+        #img = np.zeros(frame.shape + (3,), np.uint8)
+        #img[:, :, 1] = 255 // (frame.max() + 1) * frame.astype(np.uint8)
 
-        ud_arrow_start = (self.width // 2, self.height // 2)
-        ud_arrow_end = (
-            self.width // 2,
-            self.height // 2 + int(down - up) * 2,
-        )
-        ud_arrow_end = np.clip(ud_arrow_end, (0, 0), (self.width, self.height))
-        img = cv2.arrowedLine(
-            img, ud_arrow_start, ud_arrow_end, (0, 0, 255), 2
-        )
+        # ud_arrow_start = (self.width // 2, self.height // 2)
+        # ud_arrow_end = (
+        #     self.width // 2,
+        #     self.height // 2 + int(down - up) * 2,
+        # )
+        # ud_arrow_end = np.clip(ud_arrow_end, (0, 0), (self.width, self.height))
 
-        lr_arrow_start = (self.width // 2, self.height // 2)
-        lr_arrow_end = (
-            self.width // 2 + int(right - left) * 2,
-            self.height // 2,
-        )
-        lr_arrow_end = np.clip(lr_arrow_end, (0, 0), (self.width, self.height))
+        # # img = cv2.arrowedLine(
+        # #     img, ud_arrow_start, ud_arrow_end, (0, 0, 255), 2
+        # # )
 
-        img = cv2.arrowedLine(
-            img, lr_arrow_start, lr_arrow_end, (255, 0, 255), 2
-        )
+        # lr_arrow_start = (self.width // 2, self.height // 2)
+        # lr_arrow_end = (
+        #     self.width // 2 + int(right - left) * 2,
+        #     self.height // 2,
+        # )
+        # lr_arrow_end = np.clip(lr_arrow_end, (0, 0), (self.width, self.height))
 
-        cv2.imshow(self.label, img)
+        # img = cv2.arrowedLine(
+        #     img, lr_arrow_start, lr_arrow_end, (255, 0, 255), 2
+        # )
 
-        cv2.waitKey(1)
+        #cv2.imshow(self.label, img)
+        #cv2.waitKey(1)
 
     def _stop(self):
         cv2.destroyAllWindows()

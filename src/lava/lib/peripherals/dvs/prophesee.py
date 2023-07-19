@@ -147,7 +147,7 @@ class PropheseeCamera(AbstractProcess):
 @requires(CPU)
 @tag("floating_pt")
 class PyPropheseeCameraModel(PyLoihiProcessModel):
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, 8)
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
@@ -185,12 +185,18 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
             ),
             dtype=np.uint8,
         )
-        self.t_pause = time.time_ns()
-        self.t_last_iteration = time.time_ns()
+        self.t_pause = None
+        self.t_last_iteration = None
 
     def run_spk(self):
         """Load events from DVS, apply filters and transformations and send
         spikes as frame"""
+
+        if self.t_pause is None:
+            self.t_pause = time.time_ns()
+
+        if self.t_last_iteration is None:
+            self.t_last_iteration = time.time_ns()
 
         # Time passed since last iteration
         t_now = time.time_ns()
@@ -231,7 +237,9 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
             frames = np.zeros(self.s_out.shape)
 
         # Send
+        print("CAM", frames.sum(), delta_t, (time.time_ns() - self.t_pause) / 10**9)
         self.s_out.send(frames)
+        print("CAM send done")
         self.t_last_iteration = t_now
 
     def _pause(self):
