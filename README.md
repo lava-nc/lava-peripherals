@@ -38,8 +38,11 @@ curl -sSL https://install.python-poetry.org | python3 -
 git clone https://github.com/lava-nc/lava-peripherals.git
 cd lava-peripherals
 poetry config virtualenvs.in-project true
-poetry config virtualenvs.options.system-site-packages true # in order to find metavision-sdk
 poetry install
+
+# in order to find metavision-sdk
+sed -i "s/include-system-site-packages\ =\ false/include-system-site-packages\ =\ true/g" .venv/pyvenv.cfg
+
 source .venv/bin/activate
 pytest
 
