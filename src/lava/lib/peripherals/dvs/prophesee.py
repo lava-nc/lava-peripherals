@@ -237,9 +237,7 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
             frames = np.zeros(self.s_out.shape)
 
         # Send
-        print("CAM", frames.sum(), delta_t, (time.time_ns() - self.t_pause) / 10**9)
         self.s_out.send(frames)
-        print("CAM send done")
         self.t_last_iteration = t_now
 
     def _pause(self):
