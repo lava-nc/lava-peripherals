@@ -242,11 +242,21 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
         self.t_pause = time.time_ns()
 
 
-
 class PropheseeEventsIterator():
     """
-    PropheseeEventsIterator class for PropheseeCamera which will create a thread in the background to alway
-    grab events within a timewindow and put in a buffer.
+    PropheseeEventsIterator class for PropheseeCamera which will create a
+    thread in the background to always grab events within a time window and
+    put them in a buffer.
+
+    Parameters
+    ----------
+    device: str
+        String to filename if reading from a RAW/DAT file or empty string for
+        using a camera.
+    sensor_shape: (int, int)
+        Shape of the camera sensor or file recording.
+    biases: list
+        Bias settings for camera.
     """
     def __init__(self,
                  device: str,
@@ -261,16 +271,16 @@ class PropheseeEventsIterator():
             device_biases = self.mv_iterator.reader.device.get_i_ll_biases()
             for k, v in biases.items():
                 device_biases.set(k, v)
-        
+
         self.thread = Thread(target=self.recv_from_dvs)
         self.stop = False
         self.res = np.zeros(((self.true_width, self.true_height) + (1,) + (1,)),
-                            dtype=np.dtype([("y", int), ("x", int), ("p", int), ("t", int)]))
-
+                            dtype=np.dtype([("y", int), ("x", int),
+                                            ("p", int), ("t", int)]))
 
     def start(self):
         self.thread.start()
-        
+
     def join(self):
         self.stop = True
         self.thread.join()
@@ -307,14 +317,14 @@ class PyPropheseeEventIteratorModel(PyLoihiProcessModel):
         self.biases = proc_params['biases']
         self.transformations = proc_params['transformations']
         self.sensor_shape = (self.height,
-            self.width)
+                             self.width)
 
         self.reader = PropheseeEventsIterator(
             device=self.filename,
             sensor_shape=self.sensor_shape,
             biases=self.biases)
         self.reader.start()
-        
+
         self.volume = np.zeros(
             (
                 self.num_output_time_bins,
@@ -326,7 +336,10 @@ class PyPropheseeEventIteratorModel(PyLoihiProcessModel):
         )
 
     def run_spk(self):
-        """Load events from DVS, apply filters and transformations and send spikes as frame"""
+        """
+        Load events from DVS, apply filters and transformations and send
+        spikes as frame
+        """
         events = self.reader.get_events()
 
         # Apply filters to events
@@ -349,9 +362,7 @@ class PyPropheseeEventIteratorModel(PyLoihiProcessModel):
         else:
             frames = np.zeros(self.s_out.shape)
 
-        self.after_processing[self.time_step-1] = time.time_ns()
         self.s_out.send(frames)
-        self.end_time[self.time_step-1] = time.time_ns()
 
     def _pause(self):
         """Pause was called by the runtime"""
@@ -359,6 +370,9 @@ class PyPropheseeEventIteratorModel(PyLoihiProcessModel):
         self.t_pause = time.time_ns()
 
     def _stop(self):
-        """Stop was called by the runtime. Helper thread for DVS is also stopped."""
+        """
+        Stop was called by the runtime.
+        Helper thread for DVS is also stopped.
+        """
         self.reader.join()
         super()._stop()
