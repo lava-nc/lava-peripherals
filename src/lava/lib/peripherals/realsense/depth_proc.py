@@ -31,9 +31,10 @@ class RGBD2DepthSpaceTensor(AbstractProcess):
         is initialized to zeros.
     (3) For every pixel (with index (x, y)) of the Depth image:
         If the Depth value of the pixel is >= min_depth and <= max_depth, set 1
-        in binned_depth_tensor[x, y, idx], where idx corresponds to the bin 
+        in binned_depth_tensor[x, y, idx], where idx corresponds to the bin
         where the Depth value of the pixel fits.
-    (4) Apply an Average Filter (with kernel size given by down_sampling_factors)
+    (4) Apply an Average Filter
+        (with kernel size given by down_sampling_factors)
         to binned_depth_tensor[:, :, idx] for idx in range(num_depth_bins).
     (5) Scale the result by max_bias.
 
@@ -168,7 +169,8 @@ class PyRGBD2DepthSpaceTensorProcModel(PyLoihiProcessModel):
         -------
         down_sampled_binned_depth_tensor: np.ndarray
             Down-sampled Depth Space Tensor, of shape
-            (W//down_sampling_factors[0], H//down_sampling_factors[1], num_depth_bins)
+            (W//down_sampling_factors[0],
+             H//down_sampling_factors[1], num_depth_bins)
         """
         down_sampled_binned_depth_tensor = \
             conv(input_=binned_depth_tensor,

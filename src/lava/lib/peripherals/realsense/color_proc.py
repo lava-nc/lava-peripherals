@@ -37,7 +37,8 @@ class BGR2HueSpaceTensor(AbstractProcess):
         If the Saturation value of the pixel is >= saturation_threshold, set 1
         in binned_hsv_tensor[x, y, idx], where idx corresponds to the bin where
         the Hue value of the pixel fits.
-    (4) Apply an Average Filter (with kernel size given by down_sampling_factors)
+    (4) Apply an Average Filter (with kernel size given by
+        down_sampling_factors)
         to binned_hsv_tensor[:, :, idx] for idx in range(num_color_bins).
     (5) Scale the result by max_bias.
 
@@ -142,14 +143,14 @@ class PyBGR2HueSpaceTensorProcModel(PyLoihiProcessModel):
             hsv_image[:, :, 1] >= self._saturation_threshold
 
         for color_bin_idx in range(self._num_color_bins):
-            idx_hue_in_bin_range = (hsv_image[:, :, 0] >= \
+            idx_hue_in_bin_range = (hsv_image[:, :, 0] >= # noqa
                                     self._bins_hue_ranges[color_bin_idx][
-                                        0]) & (hsv_image[:, :, 0] < \
+                                        0]) & (hsv_image[:, :, 0] < # noqa
                                                self._bins_hue_ranges[
                                                    color_bin_idx][1])
 
             idx_condition = idx_saturation_above_threshold & \
-                            idx_hue_in_bin_range
+                idx_hue_in_bin_range
 
             binned_hsv_tensor[idx_condition, color_bin_idx] = 1
 
@@ -169,7 +170,8 @@ class PyBGR2HueSpaceTensorProcModel(PyLoihiProcessModel):
         -------
         down_sampled_binned_hsv_tensor: np.ndarray
             Down-sampled Hue Space Tensor, of shape
-            (W//down_sampling_factors[0], H//down_sampling_factors[1], num_color_bins)
+            (W//down_sampling_factors[0],
+             H//down_sampling_factors[1], num_color_bins)
         """
         down_sampled_binned_hsv_tensor = \
             conv(input_=binned_hsv_tensor,
