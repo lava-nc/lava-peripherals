@@ -20,7 +20,7 @@ import typing as ty
 import cv2
 
 from lava.proc.conv.utils import output_shape as compute_output_shape
-from convolution import conv
+from lava.lib.peripherals.realsense.convolution import conv
 
 
 class BGR2HueSpaceTensor(AbstractProcess):

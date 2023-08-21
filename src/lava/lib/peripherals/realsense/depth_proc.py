@@ -18,7 +18,7 @@ import numpy as np
 import typing as ty
 
 from lava.proc.conv.utils import output_shape as compute_output_shape
-from convolution import conv
+from lava.lib.peripherals.realsense.convolution import conv
 
 
 class RGBD2DepthSpaceTensor(AbstractProcess):

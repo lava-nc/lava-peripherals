@@ -96,14 +96,14 @@ class DirectRealsenseInputPM(PyLoihiProcessModel):
             depth_img_path = self._file_path + f"depth_{self._cur_steps}.exr"
             color_image = cv2.imread(color_img_path)
             os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
-            depth_image = cv2.imread(depth_img_path, \
+            depth_image = cv2.imread(depth_img_path,
                                      cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
         return color_image, depth_image
 
     def run_spk(self):
         self._cur_steps += 1
-        print(f"Num Steps --> {self._num_steps} \
-              | Curr Steps --> {self._cur_steps}")
+        # print(f"Num Steps --> {self._num_steps} \
+        #       | Curr Steps --> {self._cur_steps}")
 
         color_image, depth_image = self.get_image_data()
         self.color_frame_out.send(color_image)
