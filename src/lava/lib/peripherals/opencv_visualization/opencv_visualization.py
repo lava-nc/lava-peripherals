@@ -18,20 +18,16 @@ import time
 
 
 class OpenCVDisplay(AbstractProcess):
-    """Process that receives datas from connected processmodel. It sends
-    these values through a multiprocessing pipe (rather than a Lava OutPort)
-    to allow for plotting. The number of input ports decided by the number of
-    process models connected to this opencv process model"
+    """Process that receives datas from connected processmodel.
+    The frame data which are needed to display from connected processmodels
+    need a corresponding InPort which is connected to an OutPort. 
+    The number of input ports is decided by the number of
+    process models connected to this opencv process model.
     """
     def __init__(self,
-                 shape_frame,
-                 plot_base_width,
-                 data_shape):
-        super().__init__(shape_frame=shape_frame,
-                         plot_base_width=plot_base_width,
-                         data_shape=data_shape)
-        # initialize some input ports as needed.
-        self.frame_port = InPort(shape=shape_frame)
+                 shape):
+        super().__init__(shape=shape)
+        self.frame = InPort(shape=shape)
 
 
 @implements(proc=OpenCVDisplay, protocol=LoihiProtocol)
@@ -41,11 +37,8 @@ class OpenCVDisplayPM(PyLoihiProcessModel):
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
-        self._plot_base_width = proc_params['plot_base_width']
-        self._data_shape = proc_params['data_shape']
-        # Create windows
-        cv2.namedWindow("Input image")
-        self.prev_time = 0
+        self._shape = proc_params['shape']
+        cv2.namedWindow("Image Display")
 
     def display(self, image):
         """Visualize images on OpenCV windows
@@ -55,18 +48,10 @@ class OpenCVDisplayPM(PyLoihiProcessModel):
         ----------
         image           [np.Array]: NumPy array of rs Image
         """
-
-        img_shape = (image.shape[0], image.shape[1],)
-        print("img_shape", img_shape)
-        print("roscam_frame_ds_image", image.shape)
-
-        cam_frame_image_new = np.array(np.sum(image, axis=2),
-                                       dtype=np.uint8)
-        cv2.imshow("Input image", cam_frame_image_new)
+        image = np.array(np.sum(image, axis=2),
+                         dtype=np.uint8)
+        cv2.imshow("Image Display", image)
         cv2.waitKey(1)
-        print(f"Time to display (seconds): \
-             {(time.time_ns()-self.prev_time) / 1e9}")
-        self.prev_time = time.time_ns()
 
     def run_spk(self):
         frame = self.frame_port.recv()
