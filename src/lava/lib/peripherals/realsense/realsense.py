@@ -51,6 +51,7 @@ class DirectRealsenseInputPM(PyLoihiProcessModel):
         self._height = proc_params["height"]
         self._width = proc_params["width"]
         self._filename = proc_params["filename"]
+        self._cur_steps = 0
         if self._filename == "":
             self.pipeline = rs.pipeline()
             config = rs.config()
@@ -86,8 +87,8 @@ class DirectRealsenseInputPM(PyLoihiProcessModel):
             depth_image = np.array(aligned_depth_frame.get_data())
             color_image = np.array(color_frame.get_data())
         else:
-            color_img_path = self._file_path + f"color_{self._cur_steps}.png"
-            depth_img_path = self._file_path + f"depth_{self._cur_steps}.exr"
+            color_img_path = self._filename + f"color_{self._cur_steps}.png"
+            depth_img_path = self._filename + f"depth_{self._cur_steps}.exr"
             color_image = cv2.imread(color_img_path)
             os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
             depth_image = cv2.imread(depth_img_path,
@@ -95,6 +96,7 @@ class DirectRealsenseInputPM(PyLoihiProcessModel):
         return color_image, depth_image
 
     def run_spk(self):
+        self._cur_steps += 1
         color_image, depth_image = self.get_image_data()
         self.color_frame_out.send(color_image)
         self.depth_frame_out.send(depth_image)

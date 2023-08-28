@@ -23,8 +23,7 @@ class TestPyRealSenseCameraModel(unittest.TestCase):
         width = 640
         rgbdcamera = DirectRealsenseInput(
             height,
-            width,
-            num_steps)
+            width)
 
         run_condition = RunSteps(num_steps=num_steps)
         run_cfg = Loihi2SimCfg()
