@@ -20,7 +20,7 @@ import time
 class OpenCVDisplay(AbstractProcess):
     """Process that receives datas from connected processmodel.
     The frame data which are needed to display from connected processmodels
-    need a corresponding InPort which is connected to an OutPort. 
+    need a corresponding InPort which is connected to an OutPort.
     The number of input ports is decided by the number of
     process models connected to this opencv process model.
     """
