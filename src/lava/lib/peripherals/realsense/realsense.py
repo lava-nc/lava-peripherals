@@ -21,25 +21,23 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 class DirectRealsenseInput(AbstractProcess):
     """
-    outputting a frame from Realsense camera fetched from Realsense SDK,
-    after converting it to events
+    Outputting frames of RGB and Depth from Realsense camera fetched from Realsense SDK
+    or from recording files.
     """
 
     def __init__(
         self,
-        true_height: int,
-        true_width: int,
-        num_steps: int = 1,
+        height: int,
+        width: int,
         filename: str = "",
     ) -> None:
         super().__init__(
-            true_height=true_height,
-            true_width=true_width,
-            num_steps=num_steps,
+            height=height,
+            width=width,
             filename=filename,
         )
-        self.color_frame_out = OutPort(shape=(true_height, true_width, 3))
-        self.depth_frame_out = OutPort(shape=(true_height, true_width))
+        self.color_frame_out = OutPort(shape=(height, width, 3))
+        self.depth_frame_out = OutPort(shape=(height, width))
 
 
 @implements(proc=DirectRealsenseInput, protocol=LoihiProtocol)
@@ -50,12 +48,9 @@ class DirectRealsenseInputPM(PyLoihiProcessModel):
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
-        self._true_height = proc_params["true_height"]
-        self._true_width = proc_params["true_width"]
-        self._true_shape = (self._true_height, self._true_width)
-        self._num_steps = proc_params["num_steps"]
+        self._height = proc_params["height"]
+        self._width = proc_params["width"]
         self._filename = proc_params["filename"]
-        self._cur_steps = 0
         if self._filename == "":
             self.pipeline = rs.pipeline()
             config = rs.config()
@@ -68,13 +63,12 @@ class DirectRealsenseInputPM(PyLoihiProcessModel):
                     found_rgb = True
                     break
             if not found_rgb:
-                print("The demo requires Depth camera with Color sensor")
+                print("Requires Depth camera with Color sensor")
                 exit(0)
             config.enable_stream(rs.stream.depth, 640, 360, rs.format.z16, 30)
             config.enable_stream(rs.stream.color, 640, 360, rs.format.bgr8, 30)
             self.pipeline.start(config)
             self.align = rs.align(rs.stream.color)
-            self.saved = 0
 
     def get_image_data(self):
         if self._filename == "":
@@ -101,17 +95,10 @@ class DirectRealsenseInputPM(PyLoihiProcessModel):
         return color_image, depth_image
 
     def run_spk(self):
-        self._cur_steps += 1
-        # print(f"Num Steps --> {self._num_steps} \
-        #       | Curr Steps --> {self._cur_steps}")
-
         color_image, depth_image = self.get_image_data()
         self.color_frame_out.send(color_image)
         self.depth_frame_out.send(depth_image)
 
-        print("RealSense frame sent!")
-
     def _stop(self):
         self.pipeline.stop()
-        print("realsense pipeline stopped")
         super()._stop()

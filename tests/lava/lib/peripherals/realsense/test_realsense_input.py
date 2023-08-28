@@ -18,12 +18,12 @@ from lava.lib.peripherals.realsense.realsense import (
 
 class TestPyRealSenseCameraModel(unittest.TestCase):
     def test_base_functionality_file(self):
-        num_steps = 2
-        true_height = 360
-        true_width = 640
+        num_steps = 10
+        height = 360
+        width = 640
         rgbdcamera = DirectRealsenseInput(
-            true_height,
-            true_width,
+            height,
+            width,
             num_steps)
 
         run_condition = RunSteps(num_steps=num_steps)
