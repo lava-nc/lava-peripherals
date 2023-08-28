@@ -27,7 +27,7 @@ class OpenCVDisplay(AbstractProcess):
     def __init__(self,
                  shape):
         super().__init__(shape=shape)
-        self.frame = InPort(shape=shape)
+        self.frame_port = InPort(shape=shape)
 
 
 @implements(proc=OpenCVDisplay, protocol=LoihiProtocol)
