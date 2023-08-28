@@ -21,8 +21,8 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 class DirectRealsenseInput(AbstractProcess):
     """
-    Outputting frames of RGB and Depth from Realsense camera fetched from Realsense SDK
-    or from recording files.
+    Outputting frames of RGB and Depth from Realsense camera
+    fetched from Realsense SDK or from recording files.
     """
 
     def __init__(
