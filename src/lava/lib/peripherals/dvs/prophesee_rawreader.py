@@ -190,6 +190,7 @@ class PyPropheseeRawreaderModel(PyLoihiProcessModel):
         self.t_pause = time.time_ns()
         self.t_last_iteration = time.time_ns()
         print("this RawReader")
+
     def run_spk(self):
         """Load events from DVS, apply filters and transformations and send
         spikes as frame"""

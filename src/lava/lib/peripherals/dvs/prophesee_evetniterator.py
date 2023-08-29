@@ -144,6 +144,7 @@ class PropheseeEventsIterator(AbstractProcess):
             num_output_time_bins=self.num_output_time_bins,
         )
 
+
 class EventsIteratorWrapper():
     """
     PropheseeEventsIterator class for PropheseeCamera which will create a
@@ -237,6 +238,7 @@ class PyPropheseeEventIteratorModel(PyLoihiProcessModel):
             dtype=np.uint8,
         )
         print("this EventIterator")
+
     def run_spk(self):
         """
         Load events from DVS, apply filters and transformations and send
