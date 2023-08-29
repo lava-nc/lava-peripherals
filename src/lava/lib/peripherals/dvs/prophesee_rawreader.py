@@ -29,7 +29,7 @@ from metavision_core.event_io import EventsIterator
 from metavision_ml.preprocessing.event_to_tensor import histo_quantized
 
 
-class PropheseeCamera(AbstractProcess):
+class PropheseeRawreader(AbstractProcess):
     """
     Process that receives events from Prophesee device and sends them out as a
     histogram.
@@ -145,10 +145,10 @@ class PropheseeCamera(AbstractProcess):
         )
 
 
-@implements(proc=PropheseeCamera, protocol=LoihiProtocol)
+@implements(proc=PropheseeRawreader, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
-class PyPropheseeCameraModel(PyLoihiProcessModel):
+class PyPropheseeRawreaderModel(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
 
     def __init__(self, proc_params):
@@ -189,7 +189,7 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
         )
         self.t_pause = time.time_ns()
         self.t_last_iteration = time.time_ns()
-
+        print("this RawReader")
     def run_spk(self):
         """Load events from DVS, apply filters and transformations and send
         spikes as frame"""
@@ -240,139 +240,3 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
         """Pause was called by the runtime"""
         super()._pause()
         self.t_pause = time.time_ns()
-
-
-class PropheseeEventsIterator():
-    """
-    PropheseeEventsIterator class for PropheseeCamera which will create a
-    thread in the background to always grab events within a time window and
-    put them in a buffer.
-
-    Parameters
-    ----------
-    device: str
-        String to filename if reading from a RAW/DAT file or empty string for
-        using a camera.
-    sensor_shape: (int, int)
-        Shape of the camera sensor or file recording.
-    biases: list
-        Bias settings for camera.
-    """
-    def __init__(self,
-                 device: str,
-                 sensor_shape: tuple,
-                 biases: dict = None,):
-        self.true_height, self.true_width = sensor_shape
-
-        self.mv_iterator = EventsIterator(input_path=device, delta_t=1000)
-
-        if biases is not None:
-            # Setting Biases for DVS camera
-            device_biases = self.mv_iterator.reader.device.get_i_ll_biases()
-            for k, v in biases.items():
-                device_biases.set(k, v)
-
-        self.thread = Thread(target=self.recv_from_dvs)
-        self.stop = False
-        self.res = np.zeros(((self.true_width, self.true_height) + (1,) + (1,)),
-                            dtype=np.dtype([("y", int), ("x", int),
-                                            ("p", int), ("t", int)]))
-
-    def start(self):
-        self.thread.start()
-
-    def join(self):
-        self.stop = True
-        self.thread.join()
-
-    def get_events(self):
-        return self.res
-
-    def recv_from_dvs(self):
-        for evs in self.mv_iterator:
-            self.res = evs
-
-            if self.stop:
-                return
-
-
-@implements(proc=PropheseeCamera, protocol=LoihiProtocol)
-@requires(CPU)
-@tag("floating_pt")
-class PyPropheseeEventIteratorModel(PyLoihiProcessModel):
-    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
-
-    def __init__(self, proc_params):
-        super().__init__(proc_params)
-        self.shape = proc_params["shape"]
-        (
-            self.num_output_time_bins,
-            self.polarities,
-            self.height,
-            self.width,
-        ) = self.shape
-        self.filename = proc_params["filename"]
-        self.filters = proc_params['filters']
-        self.max_events_per_dt = proc_params['max_events_per_dt']
-        self.biases = proc_params['biases']
-        self.transformations = proc_params['transformations']
-        self.sensor_shape = (self.height,
-                             self.width)
-
-        self.reader = PropheseeEventsIterator(
-            device=self.filename,
-            sensor_shape=self.sensor_shape,
-            biases=self.biases)
-        self.reader.start()
-
-        self.volume = np.zeros(
-            (
-                self.num_output_time_bins,
-                self.polarities,
-                self.height,
-                self.width,
-            ),
-            dtype=np.uint8,
-        )
-
-    def run_spk(self):
-        """
-        Load events from DVS, apply filters and transformations and send
-        spikes as frame
-        """
-        events = self.reader.get_events()
-
-        # Apply filters to events
-        for filter in self.filters:
-            events_out = filter.get_empty_output_buffer()
-            filter.process_events(events, events_out)
-            events = events_out
-
-        if len(self.filters) > 0:
-            events = events.numpy()
-
-        # Transform events
-        if self.transformations is not None and len(events) > 0:
-            self.transformations(events)
-
-        # Transform to frame
-        if len(events) > 0:
-            histo_quantized(events, self.volume, 1000, reset=True)
-            frames = self.volume
-        else:
-            frames = np.zeros(self.s_out.shape)
-
-        self.s_out.send(frames)
-
-    def _pause(self):
-        """Pause was called by the runtime"""
-        super()._pause()
-        self.t_pause = time.time_ns()
-
-    def _stop(self):
-        """
-        Stop was called by the runtime.
-        Helper thread for DVS is also stopped.
-        """
-        self.reader.join()
-        super()._stop()
