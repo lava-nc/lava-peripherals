@@ -150,6 +150,14 @@ class EventsIteratorWrapper():
     PropheseeEventsIterator class for PropheseeCamera which will create a
     thread in the background to always grab events within a time window and
     put them in a buffer.
+    
+    delta_t: Control the size of the time window for collecting events,
+    and generate frames for the events in this time window.Increase delta_t,
+    a frame can capture more events, but when you move fast, there will be
+    too many events, at this time, you should consider reducing delta_t.
+    If delta_t is too large and greater than time interval between two steps
+    of processmodel, the thread will recv the old events data from the
+    previous time step.
 
     Parameters
     ----------
