@@ -29,7 +29,7 @@ from metavision_core.event_io import EventsIterator
 from metavision_ml.preprocessing.event_to_tensor import histo_quantized
 
 
-class PropheseeEventsIterator(AbstractProcess):
+class PropheseeCamera(AbstractProcess):
     """
     Process that receives events from Prophesee device and sends them out as a
     histogram.
@@ -207,10 +207,10 @@ class EventsIteratorWrapper():
                 return
 
 
-@implements(proc=PropheseeEventsIterator, protocol=LoihiProtocol)
+@implements(proc=PropheseeCamera, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
-class PyPropheseeEventIteratorModel(PyLoihiProcessModel):
+class PyPropheseeCameraModel(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
 
     def __init__(self, proc_params):
@@ -245,7 +245,6 @@ class PyPropheseeEventIteratorModel(PyLoihiProcessModel):
             ),
             dtype=np.uint8,
         )
-        print("this EventIterator")
 
     def run_spk(self):
         """

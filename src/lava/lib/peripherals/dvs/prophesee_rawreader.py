@@ -29,7 +29,7 @@ from metavision_core.event_io import EventsIterator
 from metavision_ml.preprocessing.event_to_tensor import histo_quantized
 
 
-class PropheseeRawreader(AbstractProcess):
+class PropheseeCamera(AbstractProcess):
     """
     Process that receives events from Prophesee device and sends them out as a
     histogram.
@@ -145,10 +145,10 @@ class PropheseeRawreader(AbstractProcess):
         )
 
 
-@implements(proc=PropheseeRawreader, protocol=LoihiProtocol)
+@implements(proc=PropheseeCamera, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
-class PyPropheseeRawreaderModel(PyLoihiProcessModel):
+class PyPropheseeCameraModel(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
 
     def __init__(self, proc_params):
@@ -189,7 +189,6 @@ class PyPropheseeRawreaderModel(PyLoihiProcessModel):
         )
         self.t_pause = time.time_ns()
         self.t_last_iteration = time.time_ns()
-        print("this RawReader")
 
     def run_spk(self):
         """Load events from DVS, apply filters and transformations and send
