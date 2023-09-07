@@ -20,9 +20,18 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 
 class DirectRealsenseInput(AbstractProcess):
-    """
-    Outputting frames of RGB and Depth from Realsense camera
-    fetched from Realsense SDK or from recording files.
+    """Process to align BGR and depth frames obtained from the RealSense camera
+    using RealSense SDK and then outputting them.
+
+    Parameters
+    ----------
+    height: int
+        Height of the image frames.
+    width: int
+        Width of the image frames.
+    filename: str
+        Path to directory that contains the images.
+        If filename is not provided, it means using the camera
     """
 
     def __init__(
@@ -64,7 +73,10 @@ class DirectRealsenseInputPM(PyLoihiProcessModel):
                     found_rgb = True
                     break
             if not found_rgb:
-                print("Requires Depth camera with Color sensor")
+                # Depth alignment needs a color frame. If a depth camera doesn't
+                # have a color sensor, the alignment can't work properly.
+                print("Don't get color sensor,\
+                       the alignment can't work properly.")
                 exit(0)
             config.enable_stream(rs.stream.depth, 640, 360, rs.format.z16, 30)
             config.enable_stream(rs.stream.color, 640, 360, rs.format.bgr8, 30)
@@ -72,6 +84,7 @@ class DirectRealsenseInputPM(PyLoihiProcessModel):
             self.align = rs.align(rs.stream.color)
 
     def get_image_data(self):
+        # using the camera
         if self._filename == "":
             frames = self.pipeline.wait_for_frames()
             # Align the depth frame to color frame
@@ -86,6 +99,7 @@ class DirectRealsenseInputPM(PyLoihiProcessModel):
                       waiting...")
             depth_image = np.array(aligned_depth_frame.get_data())
             color_image = np.array(color_frame.get_data())
+        # using the recording file
         else:
             color_img_path = self._filename + f"color_{self._cur_steps}.png"
             depth_img_path = self._filename + f"depth_{self._cur_steps}.exr"
