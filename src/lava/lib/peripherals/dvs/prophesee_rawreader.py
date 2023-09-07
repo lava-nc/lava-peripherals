@@ -5,14 +5,14 @@
 import sys
 
 try:
-    import metavision_core
+    from metavision_core.event_io import RawReader, EventDatReader
+    from metavision_ml.preprocessing.event_to_tensor import histo_quantized
 except ImportError:
     print("Need `metavision` library installed.", file=sys.stderr)
     exit(1)
 
 import numpy as np
 import time
-from threading import Thread
 
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
@@ -22,11 +22,8 @@ from lava.magma.core.process.ports.ports import OutPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.resources import CPU
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.lib.peripherals.dvs.transformation import Compose, EventVolume
 
-from metavision_core.event_io import RawReader, EventDatReader
-from metavision_core.event_io import EventsIterator
-from metavision_ml.preprocessing.event_to_tensor import histo_quantized
+from lava.lib.peripherals.dvs.transformation import Compose, EventVolume
 
 
 class PropheseeCamera(AbstractProcess):
