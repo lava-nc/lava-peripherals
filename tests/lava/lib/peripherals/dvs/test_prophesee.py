@@ -68,7 +68,7 @@ def get_shape(file_name):
         reader = RawReader(file_name)
         height, width = reader.get_size()
         del reader
-    return height,width
+    return height, width
         
 
 class Recv(AbstractProcess):
