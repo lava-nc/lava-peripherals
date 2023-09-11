@@ -5,7 +5,7 @@
 import sys
 
 try:
-    from metavision_core.event_io import EventsIterator
+    from metavision_core.event_io import EventsIterator, RawReader, EventDatReader
     from metavision_ml.preprocessing.event_to_tensor import histo_quantized
 except ImportError:
     print("Need `metavision` library installed.", file=sys.stderr)
@@ -23,6 +23,7 @@ from lava.magma.core.process.ports.ports import OutPort
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.resources import CPU
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+
 from lava.lib.peripherals.dvs.transformation import Compose, EventVolume
 
 
@@ -229,7 +230,7 @@ class EventsIteratorWrapper():
 @implements(proc=PropheseeCamera, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
-class PyPropheseeCameraModel(PyLoihiProcessModel):
+class PyPropheseeCameraEventsIteratorModel(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
 
     def __init__(self, proc_params):
@@ -311,3 +312,100 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
         """
         self.reader.join()
         super()._stop()
+
+
+@implements(proc=PropheseeCamera, protocol=LoihiProtocol)
+@requires(CPU)
+@tag("floating_pt")
+class PyPropheseeCameraRawReaderModel(PyLoihiProcessModel):
+    s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
+
+    def __init__(self, proc_params):
+        super().__init__(proc_params)
+        self.shape = proc_params["shape"]
+        (
+            self.num_output_time_bins,
+            self.polarities,
+            self.height,
+            self.width,
+        ) = self.shape
+        self.filename = proc_params["filename"]
+        self.filters = proc_params["filters"]
+        self.n_events = proc_params["n_events"]
+        self.biases = proc_params["biases"]
+        self.transformations = proc_params["transformations"]
+
+        if self.filename.split('.')[-1] == 'dat':
+            self.reader = EventDatReader(self.filename)
+        else:
+            self.reader = RawReader(self.filename,
+                                    max_events=self.n_events)
+
+        if self.biases is not None:
+            # Setting Biases for DVS camera
+            device_biases = self.reader.device.get_i_ll_biases()
+            for k, v in self.biases.items():
+                device_biases.set(k, v)
+
+        self.volume = np.zeros(
+            (
+                self.num_output_time_bins,
+                self.polarities,
+                self.height,
+                self.width,
+            ),
+            dtype=np.uint8,
+        )
+        self.t_pause = time.time_ns()
+        self.t_last_iteration = time.time_ns()
+
+    def run_spk(self):
+        """Load events from DVS, apply filters and transformations and send
+        spikes as frame"""
+
+        # Time passed since last iteration
+        t_now = time.time_ns()
+
+        # Load new events since last iteration
+        if self.t_pause > self.t_last_iteration:
+            # Runtime was paused in the meantime
+            delta_t = np.max(
+                [10000, (self.t_pause - self.t_last_iteration) // 1000]
+            )
+            delta_t_drop = np.max([10000, (t_now - self.t_pause) // 1000])
+
+            events = self.reader.load_delta_t(delta_t)
+            _ = self.reader.load_delta_t(delta_t_drop)
+        else:
+            # Runtime was not paused in the meantime
+            delta_t = np.max([10000, (t_now - self.t_last_iteration) // 1000])
+            events = self.reader.load_delta_t(delta_t)
+
+        # Apply filters to events
+        for filter in self.filters:
+            events_out = filter.get_empty_output_buffer()
+            filter.process_events(events, events_out)
+            events = events_out
+
+        if len(self.filters) > 0:
+            events = events.numpy()
+
+        # Transform events
+        if self.transformations is not None and len(events) > 0:
+            self.transformations(events)
+
+        # Transform to frame
+        if len(events) > 0:
+            histo_quantized(events, self.volume, delta_t, reset=True)
+            frames = self.volume
+        else:
+            frames = np.zeros(self.s_out.shape)
+
+        # Send
+        self.s_out.send(frames)
+        self.t_last_iteration = t_now
+
+    def _pause(self):
+        """Pause was called by the runtime"""
+        super()._pause()
+        self.t_pause = time.time_ns()
