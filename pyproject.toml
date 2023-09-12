@@ -6,6 +6,7 @@ packages = [
 ]
 include = ["tutorials"]
 version = "0.1.0.dev0"
+readme = "README.md"
 description = "A library that provides I/O processes for Lava such as DVS cameras and robotic actuators."
 authors = ["Intel's Neuromorphic Computing Lab and the open source community <lava@intel.com>"]
 homepage = "https://lava-nc.org/"
