@@ -6,7 +6,7 @@ import sys
 
 try:
     from metavision_core.event_io import (EventsIterator, RawReader,
-        EventDatReader)
+                                          EventDatReader)
     from metavision_ml.preprocessing.event_to_tensor import histo_quantized
 except ImportError:
     print("Need `metavision` library installed.", file=sys.stderr)
