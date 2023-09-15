@@ -39,7 +39,7 @@ if USE_EVENTSITERATOR:
         EventsIteratorWrapper)
 else:
     from lava.lib.peripherals.dvs.prophesee_rawreader import \
-            PropheseeCamera, PyPropheseeCameraModel
+        PropheseeCamera, PyPropheseeCameraModel
 
 
 SEQUENCE_FILENAME_RAW = "sparklers.raw"
@@ -58,6 +58,7 @@ try:
 except OSError:
     USE_CAMERA_TESTS = False
 
+
 def get_shape(file_name):
     if USE_EVENTSITERATOR:
         mv_iterator = EventsIterator(input_path=file_name,
@@ -69,7 +70,7 @@ def get_shape(file_name):
         height, width = reader.get_size()
         del reader
     return height, width
-        
+
 
 class Recv(AbstractProcess):
     """Process that receives arbitrary dense data and stores it in a Var.
@@ -162,7 +163,7 @@ class TestPyPropheseeCameraModel(unittest.TestCase):
     def test_init(self):
         """Test that the PyPropheseeCameraModel ProcessModel is instantiated
         correctly."""
-        
+
         height, width = get_shape(SEQUENCE_FILENAME_RAW)
 
         transformations = Compose(
