@@ -5,7 +5,8 @@
 import sys
 
 try:
-    from metavision_core.event_io import EventsIterator, RawReader, EventDatReader
+    from metavision_core.event_io import (EventsIterator, RawReader,
+        EventDatReader)
     from metavision_ml.preprocessing.event_to_tensor import histo_quantized
 except ImportError:
     print("Need `metavision` library installed.", file=sys.stderr)
@@ -42,8 +43,9 @@ class PropheseeCamera(AbstractProcess):
     filters: list
         List containing metavision filters.
     mode: str
-        String to specify to load events by numbers of events, timeslice or the first
-        met criterion. (Choice of "mixed", "delta_t", or "n_events"). Default is "mixed".
+        String to specify to load events by numbers of events, timeslice or
+        the first met criterion. (Choice of "mixed", "delta_t", or "n_events").
+        Default is "mixed".
     n_events: int
         Number of events in the timeslice.
     delta_t: int
@@ -146,7 +148,7 @@ class PropheseeCamera(AbstractProcess):
             biases=self.biases,
             filename=self.filename,
             filters=self.filters,
-            mode = self.mode,
+            mode=self.mode,
             n_events=self.n_events,
             delta_t=self.delta_t,
             transformations=self.transformations,
@@ -176,8 +178,9 @@ class EventsIteratorWrapper():
     sensor_shape: (int, int)
         Shape of the camera sensor or file recording.
     mode: str
-        String to specify to load events by numbers of events, timeslice or the first
-        met criterion. (Choice of "mixed", "delta_t", or "n_events"). Default is "mixed".
+        String to specify to load events by numbers of events, timeslice or
+        the first met criterion. (Choice of "mixed", "delta_t", or "n_events").
+        Default is "mixed".
     n_events: int
         Number of events in the timeslice.
     delta_t: int
