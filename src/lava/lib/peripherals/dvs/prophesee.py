@@ -229,7 +229,7 @@ class EventsIteratorWrapper():
 
 @implements(proc=PropheseeCamera, protocol=LoihiProtocol)
 @requires(CPU)
-@tag("floating_pt")
+@tag("floating_pt", "event_it")
 class PyPropheseeCameraEventsIteratorModel(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
 
@@ -316,7 +316,7 @@ class PyPropheseeCameraEventsIteratorModel(PyLoihiProcessModel):
 
 @implements(proc=PropheseeCamera, protocol=LoihiProtocol)
 @requires(CPU)
-@tag("floating_pt")
+@tag("floating_pt", "raw_reader")
 class PyPropheseeCameraRawReaderModel(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
 
