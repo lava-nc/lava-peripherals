@@ -68,7 +68,7 @@ jobs:
         sudo apt -y install metavision-sdk metavision-sdk-python3.9 >> /dev/null
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.12
+      uses: lava-nc/ci-setup-composite-action@v1.1
       with:
         repository: 'Lava'
 
