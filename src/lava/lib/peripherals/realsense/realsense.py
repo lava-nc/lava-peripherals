@@ -6,8 +6,13 @@ import os
 import cv2
 import typing as ty
 from pathlib import Path
+import sys
 
-import pyrealsense2 as rs
+try:
+    import pyrealsense2 as rs
+except ImportError:
+    print("Need `pyrealsense2` library installed.", file=sys.stderr)
+    exit(1)
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import OutPort
@@ -118,6 +123,10 @@ class Realsense(AbstractProcess):
             self.proc_params["rgb_2d_shape"] = self.rgb_2d_shape
             self.proc_params["rgb_3d_shape"] = self.rgb_3d_shape
             self.proc_params["depth_2d_shape"] = self.depth_2d_shape
+
+            if align_depth_to_rgb:
+                raise NotImplementedError("Aligning Depth frames to RGB "
+                                          "frames is not implemented.")
 
             rgb_out_shape = self.rgb_3d_shape
             depth_out_shape = self.depth_2d_shape
