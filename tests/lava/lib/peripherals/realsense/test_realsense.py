@@ -34,7 +34,7 @@ class TestRealsense(unittest.TestCase):
                          realsense.depth_out_port.shape)
 
     @unittest.skipUnless(has_valid_camera, "Requires valid Realsense camera.")
-    def test_init_camera_not_align_depth_to_rgb(self) -> None:
+    def test_init_camera_not_align_depth_to_bgr(self) -> None:
         """Test that the Realsense Process (reading from camera, not aligning
         Depth frames to BGR frames) is instantiated correctly."""
         realsense = Realsense(align_depth_to_bgr=False)
@@ -54,7 +54,7 @@ class TestRealsense(unittest.TestCase):
         self.assertEqual(realsense.bgr_out_port.shape, (480, 640, 3))
         self.assertEqual(realsense.depth_out_port.shape, (480, 640))
 
-    def test_init_files_not_align_depth_to_rgb(self) -> None:
+    def test_init_files_not_align_depth_to_bgr(self) -> None:
         """Test that the Realsense Process (reading from files, not aligning
         Depth frames to BGR frames) is instantiated correctly."""
         realsense = Realsense(align_depth_to_bgr=False,
