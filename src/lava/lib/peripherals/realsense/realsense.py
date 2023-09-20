@@ -205,7 +205,7 @@ class LoihiDensePyRealsensePM(PyLoihiProcessModel):
             Depth frame.
         """
         frameset = self._pipeline.wait_for_frames()
-        if self._align_depth_to_rgb:
+        if self._align_depth_to_bgr:
             frameset = self._align.process(frameset)
 
         bgr_frame = np.array(frameset.get_color_frame().get_data())
