@@ -2,10 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
 
-import sys
-sys.path.append("/home/pplank/lava_dev/lava-peripherals/")
-sys.path.append("/home/pplank/lava_dev/lava-peripherals/src")
-
 import unittest
 import os
 import time
@@ -54,7 +50,7 @@ except OSError:
 
 def get_shape(file_name):
     mv_iterator = EventsIterator(input_path=file_name,
-                                    delta_t=1000)
+                                 delta_t=1000)
     height, width = mv_iterator.get_size()
     del mv_iterator
     return height, width
@@ -149,8 +145,8 @@ class TestPropheseeCamera(unittest.TestCase):
 
 class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
     def test_init(self):
-        """Test that the PyPropheseeCameraEventsIteratorModel ProcessModel is instantiated
-        correctly."""
+        """Test that the PyPropheseeCameraEventsIteratorModel ProcessModel
+        is instantiated correctly."""
 
         height, width = get_shape(SEQUENCE_FILENAME_RAW)
 
@@ -194,7 +190,8 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
 
         run_condition = RunSteps(num_steps=num_steps)
         custom_proc_model_map = {}
-        custom_proc_model_map[PropheseeCamera] = PyPropheseeCameraEventsIteratorModel
+        custom_proc_model_map[PropheseeCamera] = \
+            PyPropheseeCameraEventsIteratorModel
         run_cfg = Loihi2SimCfg(exception_proc_model_map=custom_proc_model_map)
         camera.run(condition=run_condition, run_cfg=run_cfg)
         camera.stop()
@@ -203,8 +200,7 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
         """Test that running a PropheseeCamera works
         using a dat data file."""
         # The DAT file should have the same resolution as the RAW file
-
-        height, width = get_shape(SEQUENCE_FILENAME_DAT)
+        height, width = get_shape(SEQUENCE_FILENAME_RAW)
         num_steps = 2
 
         camera = PropheseeCamera(
@@ -213,7 +209,8 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
 
         run_condition = RunSteps(num_steps=num_steps)
         custom_proc_model_map = {}
-        custom_proc_model_map[PropheseeCamera] = PyPropheseeCameraEventsIteratorModel
+        custom_proc_model_map[PropheseeCamera] = \
+            PyPropheseeCameraEventsIteratorModel
         run_cfg = Loihi2SimCfg(exception_proc_model_map=custom_proc_model_map)
         camera.run(condition=run_condition, run_cfg=run_cfg)
         camera.stop()
@@ -227,7 +224,8 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
 
         run_condition = RunSteps(num_steps=num_steps)
         custom_proc_model_map = {}
-        custom_proc_model_map[PropheseeCamera] = PyPropheseeCameraEventsIteratorModel
+        custom_proc_model_map[PropheseeCamera] = \
+            PyPropheseeCameraEventsIteratorModel
         run_cfg = Loihi2SimCfg(exception_proc_model_map=custom_proc_model_map)
         camera.run(condition=run_condition, run_cfg=run_cfg)
         camera.stop()
@@ -252,7 +250,8 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
 
         run_condition = RunSteps(num_steps=num_steps)
         custom_proc_model_map = {}
-        custom_proc_model_map[PropheseeCamera] = PyPropheseeCameraEventsIteratorModel
+        custom_proc_model_map[PropheseeCamera] = \
+            PyPropheseeCameraEventsIteratorModel
         run_cfg = Loihi2SimCfg(exception_proc_model_map=custom_proc_model_map)
         camera.run(condition=run_condition, run_cfg=run_cfg)
         camera.stop()
@@ -277,7 +276,8 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
 
         run_condition = RunSteps(num_steps=num_steps)
         custom_proc_model_map = {}
-        custom_proc_model_map[PropheseeCamera] = PyPropheseeCameraEventsIteratorModel
+        custom_proc_model_map[PropheseeCamera] = \
+            PyPropheseeCameraEventsIteratorModel
         run_cfg = Loihi2SimCfg(exception_proc_model_map=custom_proc_model_map)
         camera.run(condition=run_condition, run_cfg=run_cfg)
         camera.stop()
@@ -301,7 +301,8 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
 
         run_condition = RunSteps(num_steps=num_steps)
         custom_proc_model_map = {}
-        custom_proc_model_map[PropheseeCamera] = PyPropheseeCameraEventsIteratorModel
+        custom_proc_model_map[PropheseeCamera] = \
+            PyPropheseeCameraEventsIteratorModel
         run_cfg = Loihi2SimCfg(exception_proc_model_map=custom_proc_model_map)
         camera.run(condition=run_condition, run_cfg=run_cfg)
         camera.stop()
@@ -331,7 +332,8 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
 
         run_condition = RunSteps(num_steps=num_steps)
         custom_proc_model_map = {}
-        custom_proc_model_map[PropheseeCamera] = PyPropheseeCameraEventsIteratorModel
+        custom_proc_model_map[PropheseeCamera] = \
+            PyPropheseeCameraEventsIteratorModel
         run_cfg = Loihi2SimCfg(exception_proc_model_map=custom_proc_model_map)
         camera.run(condition=run_condition, run_cfg=run_cfg)
         recv_data = recv.buffer.get()
@@ -351,7 +353,8 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
 
         run_condition = RunContinuous()
         custom_proc_model_map = {}
-        custom_proc_model_map[PropheseeCamera] = PyPropheseeCameraEventsIteratorModel
+        custom_proc_model_map[PropheseeCamera] = \
+            PyPropheseeCameraEventsIteratorModel
         run_cfg = Loihi2SimCfg(exception_proc_model_map=custom_proc_model_map)
         camera.run(condition=run_condition, run_cfg=run_cfg)
         time.sleep(0.1)
@@ -363,7 +366,7 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
 
 
 class TestPyPropheseeCameraModel_RawReader(unittest.TestCase):
-    
+
     def test_init(self):
         """Test that the PyPropheseeCameraRawReaderModel ProcessModel is instantiated
         correctly."""
