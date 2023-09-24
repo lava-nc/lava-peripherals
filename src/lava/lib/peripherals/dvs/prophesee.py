@@ -63,7 +63,7 @@ class PropheseeCamera(AbstractProcess):
         biases: dict = None,
         filters: list = [],
         mode: str = "mixed",
-        n_events: int = 1000,
+        n_events: int = 10**8,
         delta_t: int = 1000,
         transformations: Compose = None,
         num_output_time_bins: int = 1,

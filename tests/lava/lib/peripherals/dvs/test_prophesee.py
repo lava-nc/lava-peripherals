@@ -1,42 +1,38 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
-from http.client import TOO_MANY_REQUESTS
-import unittest
 
-import numpy as np
+import sys
+sys.path.append("/home/pplank/lava_dev/lava-peripherals/")
+sys.path.append("/home/pplank/lava_dev/lava-peripherals/src")
+
+import unittest
 import os
 import time
+import numpy as np
 import typing as ty
 
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.process.ports.ports import InPort
 from lava.magma.core.process.variable import Var
-
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-
 from lava.magma.core.decorator import implements, requires
 from lava.magma.core.resources import CPU
-
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 from lava.magma.core.model.py.type import LavaPyType
 from lava.magma.core.model.py.ports import PyInPort
-
 from lava.magma.core.run_configs import Loihi2SimCfg
 from lava.magma.core.run_conditions import RunSteps, RunContinuous
-
 from lava.lib.peripherals.dvs.transformation import Compose, Downsample
-from metavision_core.utils import get_sample
-from metavision_core.event_io import (
-    RawReader, EventDatReader, EventsIterator)
-from metavision_sdk_cv import ActivityNoiseFilterAlgorithm
-
-
 from lava.lib.peripherals.dvs.prophesee import (
     PropheseeCamera,
     PyPropheseeCameraRawReaderModel,
     PyPropheseeCameraEventsIteratorModel,
     EventsIteratorWrapper)
+
+from metavision_core.utils import get_sample
+from metavision_core.event_io import RawReader, EventsIterator
+from metavision_sdk_cv import ActivityNoiseFilterAlgorithm
 
 
 SEQUENCE_FILENAME_RAW = "sparklers.raw"
@@ -125,7 +121,7 @@ class TestPropheseeCamera(unittest.TestCase):
 
         height, width = get_shape(SEQUENCE_FILENAME_RAW)
 
-        max_events_per_dt = -12
+        n_events = -12
         num_output_time_bins = -1
         biases = {"bias_diff": 80}
 
@@ -133,7 +129,7 @@ class TestPropheseeCamera(unittest.TestCase):
             PropheseeCamera(
                 filename=SEQUENCE_FILENAME_RAW,
                 sensor_shape=(height, width),
-                max_events_per_dt=max_events_per_dt,
+                n_events=n_events,
             )
 
         with self.assertRaises(ValueError):
@@ -174,15 +170,15 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
                     width=width, height=height, threshold=1000
                 )
             ],
-            "max_events_per_dt": 10**8,
-            "transformations": transformations,
-            "num_output_time_bins": num_output_time_bins,
+            "mode": "mixed",
+            "n_events": 10**8,
+            "delta_t": 1000,
+            "transformations": transformations
         }
 
         pm = PyPropheseeCameraEventsIteratorModel(proc_params)
 
         self.assertIsInstance(pm, PyPropheseeCameraEventsIteratorModel)
-
         self.assertIsInstance(pm.reader, EventsIteratorWrapper)
 
     def test_base_functionality_file(self):
@@ -208,7 +204,7 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
         using a dat data file."""
         # The DAT file should have the same resolution as the RAW file
 
-        height, width = get_shape(SEQUENCE_FILENAME_RAW)
+        height, width = get_shape(SEQUENCE_FILENAME_DAT)
         num_steps = 2
 
         camera = PropheseeCamera(
@@ -238,7 +234,7 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
 
     @unittest.skipUnless(USE_CAMERA_TESTS, "Needs live camera")
     def test_biases(self):
-        """Test that setting biases works"""
+        """Test that setting biases works."""
 
         num_steps = 2
         biases = {
@@ -262,7 +258,7 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
         camera.stop()
 
     def test_filters(self):
-        """Test that setting biases works"""
+        """Test that filters work."""
 
         height, width = get_shape(SEQUENCE_FILENAME_RAW)
 
@@ -287,7 +283,7 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
         camera.stop()
 
     def test_transformations(self):
-        """Test that setting biases works"""
+        """Test that transformations work."""
 
         height, width = get_shape(SEQUENCE_FILENAME_RAW)
 
@@ -365,7 +361,9 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
         time.sleep(0.1)
         camera.stop()
 
+
 class TestPyPropheseeCameraModel_RawReader(unittest.TestCase):
+    
     def test_init(self):
         """Test that the PyPropheseeCameraRawReaderModel ProcessModel is instantiated
         correctly."""
@@ -388,15 +386,13 @@ class TestPyPropheseeCameraModel_RawReader(unittest.TestCase):
                     width=width, height=height, threshold=1000
                 )
             ],
-            "max_events_per_dt": 10**8,
-            "transformations": transformations,
-            "num_output_time_bins": num_output_time_bins,
+            "n_events": 10**8,
+            "transformations": transformations
         }
 
         pm = PyPropheseeCameraRawReaderModel(proc_params)
 
         self.assertIsInstance(pm, PyPropheseeCameraRawReaderModel)
-    
         self.assertIsInstance(pm.reader, RawReader)
 
     def test_base_functionality_file(self):
@@ -422,7 +418,7 @@ class TestPyPropheseeCameraModel_RawReader(unittest.TestCase):
         using a dat data file."""
         # The DAT file should have the same resolution as the RAW file
 
-        height, width = get_shape(SEQUENCE_FILENAME_RAW)
+        height, width = get_shape(SEQUENCE_FILENAME_DAT)
         num_steps = 2
 
         camera = PropheseeCamera(
@@ -452,7 +448,7 @@ class TestPyPropheseeCameraModel_RawReader(unittest.TestCase):
 
     @unittest.skipUnless(USE_CAMERA_TESTS, "Needs live camera")
     def test_biases(self):
-        """Test that setting biases works"""
+        """Test that setting biases works."""
 
         num_steps = 2
         biases = {
@@ -476,7 +472,7 @@ class TestPyPropheseeCameraModel_RawReader(unittest.TestCase):
         camera.stop()
 
     def test_filters(self):
-        """Test that setting biases works"""
+        """Test that filters work."""
 
         height, width = get_shape(SEQUENCE_FILENAME_RAW)
 
@@ -501,7 +497,7 @@ class TestPyPropheseeCameraModel_RawReader(unittest.TestCase):
         camera.stop()
 
     def test_transformations(self):
-        """Test that setting biases works"""
+        """Test that transformations work."""
 
         height, width = get_shape(SEQUENCE_FILENAME_RAW)
 
@@ -578,4 +574,7 @@ class TestPyPropheseeCameraModel_RawReader(unittest.TestCase):
         camera.run(condition=run_condition, run_cfg=run_cfg)
         time.sleep(0.1)
         camera.stop()
-        
+
+
+if __name__ == "__main__":
+    unittest.main()
