@@ -204,7 +204,9 @@ class TestPyPropheseeCameraModel_EventsIT(unittest.TestCase):
         num_steps = 2
 
         camera = PropheseeCamera(
-            filename=SEQUENCE_FILENAME_DAT, sensor_shape=(height, width)
+            filename=SEQUENCE_FILENAME_DAT,
+            sensor_shape=(height, width),
+            n_events=1000
         )
 
         run_condition = RunSteps(num_steps=num_steps)
