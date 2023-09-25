@@ -51,8 +51,6 @@ class ProcessOutModel(PyLoihiProcessModel):
     def run_spk(self):
         """Receive spikes and store in an internal variable"""
         frame = self.frame_in.recv()
-        print(frame)
-        print(frame.shape)
         direction_in = self.direction_in.recv()
         n_per_direction = self.direction_shape[0] // 2
 
