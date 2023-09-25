@@ -1,27 +1,28 @@
 # Copyright (C) 2023 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # See: https://spdx.org/licenses/
+
 import numpy as np
 import os
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
-import cv2
-import typing as ty
-from pathlib import Path
-import sys
+import cv2  # noqa: E402
+import typing as ty  # noqa: E402
+from pathlib import Path  # noqa: E402
+import sys  # noqa: E402
 
 try:
-    import pyrealsense2 as rs
+    import pyrealsense2 as rs  # noqa: E402
 except ImportError:
     print("Need `pyrealsense2` library installed.", file=sys.stderr)
     exit(1)
-from lava.magma.core.process.process import AbstractProcess
-from lava.magma.core.process.ports.ports import OutPort
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
-from lava.magma.core.model.py.ports import PyOutPort
-from lava.magma.core.model.py.type import LavaPyType
-from lava.magma.core.resources import CPU
-from lava.magma.core.decorator import implements, requires
-from lava.magma.core.model.py.model import PyLoihiProcessModel
+from lava.magma.core.process.process import AbstractProcess  # noqa: E402
+from lava.magma.core.process.ports.ports import OutPort  # noqa: E402
+from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol  # noqa: E402, E501
+from lava.magma.core.model.py.ports import PyOutPort  # noqa: E402
+from lava.magma.core.model.py.type import LavaPyType  # noqa: E402
+from lava.magma.core.resources import CPU  # noqa: E402
+from lava.magma.core.decorator import implements, requires  # noqa: E402
+from lava.magma.core.model.py.model import PyLoihiProcessModel  # noqa: E402
 
 
 class Realsense(AbstractProcess):
