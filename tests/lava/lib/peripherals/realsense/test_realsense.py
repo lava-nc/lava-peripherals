@@ -1,11 +1,13 @@
+# Copyright (C) 2023 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import unittest
-import numpy as np
 import sys
 
 from lava.lib.peripherals.realsense.realsense import Realsense
-
-from lava.magma.core.run_configs import Loihi2HwCfg, Loihi2SimCfg
-from lava.magma.core.run_conditions import RunSteps, RunContinuous
+from lava.magma.core.run_configs import Loihi2SimCfg
+from lava.magma.core.run_conditions import RunSteps
 
 has_valid_camera = False
 try:
