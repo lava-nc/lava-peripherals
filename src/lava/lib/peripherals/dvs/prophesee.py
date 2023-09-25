@@ -129,8 +129,8 @@ class PropheseeCamera(AbstractProcess):
                     "Your transformation is not compatible with the provided \
                     data."
                 )
-
-        self.s_out = OutPort(shape=self.shape)
+        num_neurons = np.prod(self.shape)
+        self.s_out = OutPort(shape=(num_neurons,))
 
         super().__init__(
             shape=self.shape,
@@ -237,6 +237,7 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
             frames = np.zeros(self.s_out.shape)
 
         # Send
+        frames = frames.flatten()
         self.s_out.send(frames)
         self.t_last_iteration = t_now
 
