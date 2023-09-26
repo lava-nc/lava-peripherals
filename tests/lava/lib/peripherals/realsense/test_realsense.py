@@ -45,7 +45,7 @@ class TestRealsense(unittest.TestCase):
     def test_init_files(self) -> None:
         """Test that the Realsense Process (reading from files)
         is instantiated correctly."""
-        directory_path = Path(__file__).resolve() / "recording"
+        directory_path = Path(__file__).resolve().parent / "recording"
 
         # TODO: Uncomment this when align_depth_to_bgr=True is supported with
         #  files
@@ -70,7 +70,7 @@ class TestRealsense(unittest.TestCase):
         with self.assertRaises(NotADirectoryError):
             _ = Realsense(directory_path="invalid")
 
-        directory_path = Path(__file__).resolve() / "recording"
+        directory_path = Path(__file__).resolve().parent / "recording"
 
         with self.assertRaises(FileNotFoundError):
             _ = Realsense(directory_path=str(directory_path),
