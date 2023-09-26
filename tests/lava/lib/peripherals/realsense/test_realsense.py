@@ -95,7 +95,7 @@ class TestLoihiDensePyRealsensePM(unittest.TestCase):
     def test_run_files(self) -> None:
         """Test that the Realsense Process (reading from files) runs
         correctly."""
-        directory_path = Path(__file__).resolve() / "recording"
+        directory_path = Path(__file__).resolve().parent / "recording"
 
         realsense = Realsense(directory_path=str(directory_path),
                               png_prefix="bgr_",
