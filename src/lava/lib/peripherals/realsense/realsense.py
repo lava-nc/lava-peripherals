@@ -53,7 +53,7 @@ class Realsense(AbstractProcess):
     """
 
     def __init__(self,
-                 align_depth_to_bgr: ty.Optional[bool] = True,
+                 align_depth_to_bgr: ty.Optional[bool] = False,
                  directory_path: ty.Optional[str] = None,
                  png_prefix: ty.Optional[str] = "",
                  exr_prefix: ty.Optional[str] = "") -> None:

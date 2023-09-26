@@ -4,6 +4,7 @@
 
 import unittest
 import sys
+from pathlib import Path
 
 from lava.lib.peripherals.realsense.realsense import Realsense
 from lava.magma.core.run_configs import Loihi2SimCfg
@@ -28,62 +29,52 @@ except ImportError:
 class TestRealsense(unittest.TestCase):
     @unittest.skipUnless(has_valid_camera, "Requires valid Realsense camera.")
     def test_init_camera(self) -> None:
-        """Test that the Realsense Process (reading from camera, aligning
-        Depth frames to BGR frames) is instantiated correctly."""
+        """Test that the Realsense Process (reading from camera)
+        is instantiated correctly."""
         realsense = Realsense()
-
-        self.assertEqual(realsense.bgr_out_port.shape[:2],
-                         realsense.depth_out_port.shape)
-
-    @unittest.skipUnless(has_valid_camera, "Requires valid Realsense camera.")
-    def test_init_camera_not_align_depth_to_bgr(self) -> None:
-        """Test that the Realsense Process (reading from camera, not aligning
-        Depth frames to BGR frames) is instantiated correctly."""
-        realsense = Realsense(align_depth_to_bgr=False)
 
         if realsense.bgr_2d_shape != realsense.depth_2d_shape:
             self.assertNotEqual(realsense.bgr_out_port.shape[:2],
                                 realsense.depth_out_port.shape)
 
-    @unittest.skip("align_depth_to_rgb not implemented for files.")
+        realsense = Realsense(align_depth_to_bgr=True)
+
+        self.assertEqual(realsense.bgr_out_port.shape[:2],
+                         realsense.depth_out_port.shape)
+
     def test_init_files(self) -> None:
-        """Test that the Realsense Process (reading from files, aligning
-        Depth frames to BGR frames) is instantiated correctly."""
-        realsense = Realsense(directory_path="recording",
-                              png_prefix="bgr_",
-                              exr_prefix="depth_")
+        """Test that the Realsense Process (reading from files)
+        is instantiated correctly."""
+        directory_path = Path().resolve() / "recording"
 
-        self.assertEqual(realsense.bgr_out_port.shape, (480, 640, 3))
-        self.assertEqual(realsense.depth_out_port.shape, (480, 640))
+        # TODO: Uncomment this when align_depth_to_bgr=True is supported with
+        #  files
+        # realsense = Realsense(align_depth_to_bgr=True,
+        #                       directory_path=str(directory_path),
+        #                       png_prefix="bgr_",
+        #                       exr_prefix="depth_")
+        #
+        # self.assertEqual(realsense.bgr_out_port.shape, (480, 640, 3))
+        # self.assertEqual(realsense.depth_out_port.shape, (480, 640))
 
-    def test_init_files_not_align_depth_to_bgr(self) -> None:
-        """Test that the Realsense Process (reading from files, not aligning
-        Depth frames to BGR frames) is instantiated correctly."""
-        realsense = Realsense(align_depth_to_bgr=False,
-                              directory_path="recording",
+        realsense = Realsense(directory_path=str(directory_path),
                               png_prefix="bgr_",
                               exr_prefix="depth_")
 
         self.assertEqual(realsense.bgr_out_port.shape, (480, 640, 3))
         self.assertEqual(realsense.depth_out_port.shape, (240, 320))
 
-    def test_init_files_invalid_directory_path(self) -> None:
-        """Test that initializing the Realsense Process with an invalid
-        directory_path raises an NotADirectoryError"""
+    def test_init_files_invalid_parameters(self) -> None:
+        """Test that initializing the Realsense Process (reading from files)
+        with invalid parameters raise errors:"""
         with self.assertRaises(NotADirectoryError):
             _ = Realsense(directory_path="invalid")
 
-    def test_init_files_invalid_png_prefix(self) -> None:
-        """Test that initializing the Realsense Process with an invalid
-        png_prefix raises a FileNotFoundError."""
         with self.assertRaises(FileNotFoundError):
             _ = Realsense(directory_path="recording",
                           png_prefix="invalid",
                           exr_prefix="depth_")
 
-    def test_init_files_invalid_exr_prefix(self) -> None:
-        """Test that initializing the Realsense Process with an invalid
-        exr_prefix raises a FileNotFoundError."""
         with self.assertRaises(FileNotFoundError):
             _ = Realsense(directory_path="recording",
                           png_prefix="bgr_",
@@ -102,8 +93,9 @@ class TestLoihiDensePyRealsensePM(unittest.TestCase):
     def test_run_files(self) -> None:
         """Test that the Realsense Process (reading from files) runs
         correctly."""
-        realsense = Realsense(align_depth_to_bgr=False,
-                              directory_path="recording",
+        directory_path = Path().resolve() / "recording"
+
+        realsense = Realsense(directory_path=str(directory_path),
                               png_prefix="bgr_",
                               exr_prefix="depth_")
         realsense.run(condition=RunSteps(num_steps=2), run_cfg=Loihi2SimCfg())
