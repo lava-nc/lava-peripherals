@@ -24,7 +24,7 @@ prophesee_input_default_config = {
     "filename": "hand_swipe.dat",
     "transformations": Compose(
         [
-            Downsample(factor=0.05),
+            Downsample(factor=0.125),
             MergePolarities(),
         ]
     ),
@@ -46,7 +46,7 @@ weights_default_config = {
 }
 
 num_out_neurons_default = 50
-blocking_default_config = True
+blocking_default_config = False
 
 
 class SwipeDetector():
@@ -58,7 +58,7 @@ class SwipeDetector():
                  lif_config: ty.Optional[dict] = None,
                  weights_config: ty.Optional[dict] = None,
                  num_out_neurons: ty.Optional[dict] = None,
-                 blocking: ty.Optional[bool] = False,
+                 blocking: ty.Optional[bool] = None,
                  ):
         self.prophesee_input_config = prophesee_input_config or \
                                       prophesee_input_default_config
@@ -170,7 +170,7 @@ class SwipeDetector():
 
         ## Additionaly implement Adapters in case loihi 2 is available
         if self.use_loihi2:
-            self.in_adapter = PyToNxAdapter(shape=self.flat_shape)
+            self.in_adapter = PyToNxAdapter(shape=self.flat_shape, num_message_bits=8)
             self.out_adapter = NxToPyAdapter(shape=(2 * self.num_out_neurons,))
 
     def make_connections(self):
@@ -183,7 +183,7 @@ class SwipeDetector():
             self.out_lif.s_out.connect(self.out_adapter.inp)
             self.out_adapter.out.connect(self.recv.direction_in)
         else:
-            self.frame_input.s_out.flatten().connect(self.ff_inp.s_in)
+            self.frame_input.s_out.connect(self.ff_inp.s_in)
             self.out_lif.s_out.connect(self.recv.direction_in)
 
         self.ff_inp.a_out.reshape(self.lif_inp.a_in.shape).connect(self.lif_inp.a_in)

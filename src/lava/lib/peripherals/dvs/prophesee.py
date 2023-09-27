@@ -202,19 +202,20 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
         t_now = time.time_ns()
 
         # Load new events since last iteration
-        if self.t_pause > self.t_last_iteration:
+        #if self.t_pause > self.t_last_iteration:
             # Runtime was paused in the meantime
-            delta_t = np.max(
-                [10000, (self.t_pause - self.t_last_iteration) // 1000]
-            )
-            delta_t_drop = np.max([10000, (t_now - self.t_pause) // 1000])
+        #    delta_t = np.max(
+        #        [10000, (self.t_pause - self.t_last_iteration) // 1000]
+        #    )
+        #    delta_t_drop = np.max([10000, (t_now - self.t_pause) // 1000])
 
-            events = self.reader.load_delta_t(delta_t)
-            _ = self.reader.load_delta_t(delta_t_drop)
-        else:
-            # Runtime was not paused in the meantime
-            delta_t = np.max([10000, (t_now - self.t_last_iteration) // 1000])
-            events = self.reader.load_delta_t(delta_t)
+        #    events = self.reader.load_delta_t(delta_t)
+        #    _ = self.reader.load_delta_t(delta_t_drop)
+        #else:
+        # Runtime was not paused in the meantime
+        #delta_t = np.max([10000, (t_now - self.t_last_iteration) // 1000])
+        delta_t = 10000
+        events = self.reader.load_delta_t(delta_t)
 
         # Apply filters to events
         for filter in self.filters:
@@ -238,8 +239,10 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
 
         # Send
         frames = frames.flatten()
+        print("sending")
+        print(frames.sum().sum())
         self.s_out.send(frames)
-        self.t_last_iteration = t_now
+        self.t_last_iteration = time.time_ns()
 
     def _pause(self):
         """Pause was called by the runtime"""

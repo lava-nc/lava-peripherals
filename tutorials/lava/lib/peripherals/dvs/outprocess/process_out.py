@@ -52,6 +52,7 @@ class ProcessOutModel(PyLoihiProcessModel):
         """Receive spikes and store in an internal variable"""
         frame = self.frame_in.recv()
         direction_in = self.direction_in.recv()
+        print(direction_in)
         n_per_direction = self.direction_shape[0] // 2
 
         left = direction_in[:n_per_direction].sum()
@@ -60,14 +61,13 @@ class ProcessOutModel(PyLoihiProcessModel):
 
         frame = np.rot90(frame.sum(axis=0).sum(axis=0))
         frame = np.rot90(frame)
-
         lr_arrow_start = (self.width // 2, self.height // 2)
         lr_arrow_end = (
             self.width // 2 + int(right - left) * 3,
             self.height // 2,
         )
         lr_arrow_end = np.clip(lr_arrow_end, (0, 0), (self.width, self.height))
-
+        print(lr_arrow_end)
         data_dict = {
             "dvs_frame": frame,
             "arrow": [lr_arrow_start, lr_arrow_end]

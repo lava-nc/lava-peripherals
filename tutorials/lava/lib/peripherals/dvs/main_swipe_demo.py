@@ -33,6 +33,7 @@ num_steps = 400
 # updating the bokeh doc
 is_done = [False]
 use_loihi2 = Loihi2.is_loihi2_available
+#use_loihi2 = False
 print(use_loihi2)
 
 # ==========================================================================
@@ -43,6 +44,7 @@ network = SwipeDetector(send_pipe,
                         num_steps,
                         use_loihi2)
 print("network initialized")
+print(network.frame_input.shape)
 # ==========================================================================
 # Bokeh Helpers
 # ==========================================================================
@@ -139,7 +141,8 @@ bokeh_document.add_root(
 # ==========================================================================
 def update(dvs_frame, arrow) -> None:
     dvs_frame_im.data_source.data["image"] = [dvs_frame]
-    arrow_bokeh.x_end = (128-arrow[1][0])/128
+    print(arrow)
+    arrow_bokeh.x_end = (96-arrow[1][0])/96
 
 # ==========================================================================
 # Bokeh Main loop
