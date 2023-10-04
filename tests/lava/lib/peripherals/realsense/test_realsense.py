@@ -57,7 +57,7 @@ class TestRealSense(unittest.TestCase):
 
     def test_init_files_invalid_parameters(self) -> None:
         """Test that initializing the Realsense Process reading from
-        files, with invalid parameters, raises errors:"""
+        files, with invalid parameters, raises errors."""
         with self.assertRaises(NotADirectoryError):
             _ = RealSense(directory_path="invalid")
 
