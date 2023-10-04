@@ -3,36 +3,39 @@
 # See: https://spdx.org/licenses/
 
 import numpy as np
+import typing as ty
+from pathlib import Path
+import sys
 import os
-os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
-import cv2  # noqa: E402
-import typing as ty  # noqa: E402
-from pathlib import Path  # noqa: E402
-import sys  # noqa: E402
+
+from lava.magma.core.process.process import AbstractProcess
+from lava.magma.core.process.ports.ports import OutPort
+from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
+from lava.magma.core.model.py.ports import PyOutPort
+from lava.magma.core.model.py.type import LavaPyType
+from lava.magma.core.resources import CPU
+from lava.magma.core.decorator import implements, requires
+from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 try:
-    import pyrealsense2 as rs  # noqa: E402
+    import pyrealsense2 as rs
 except ImportError:
     print("Need `pyrealsense2` library installed.", file=sys.stderr)
     exit(1)
-from lava.magma.core.process.process import AbstractProcess  # noqa: E402
-from lava.magma.core.process.ports.ports import OutPort  # noqa: E402
-from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol  # noqa: E402, E501
-from lava.magma.core.model.py.ports import PyOutPort  # noqa: E402
-from lava.magma.core.model.py.type import LavaPyType  # noqa: E402
-from lava.magma.core.resources import CPU  # noqa: E402
-from lava.magma.core.decorator import implements, requires  # noqa: E402
-from lava.magma.core.model.py.model import PyLoihiProcessModel  # noqa: E402
 
 
-class Realsense(AbstractProcess):
-    """Process that reads BGR+Depth frames, either from a Realsense camera
+os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
+import cv2  # noqa: E402
+
+
+class RealSense(AbstractProcess):
+    """Process that reads BGR+depth frames, either from a RealSense camera
     directly, or from recorded PNG+EXR files.
 
-    If directory_path is not given, the Process will read and send RGB and
-    Depth frames from a Realsense camera.
+    If directory_path is not given, the Process will read and send BGR and
+    depth frames from a RealSense camera.
 
-    If directory_path is given, the Process will read and send BGR and Depth
+    If directory_path is given, the Process will read and send BGR and depth
     frames from PNG and EXR files contained in the directory which the path
     points to.
     In this case, png_prefix and exr_prefix have to be provided to inform the
@@ -41,15 +44,15 @@ class Realsense(AbstractProcess):
     Parameters
     ----------
     align_depth_to_bgr: bool, optional
-        Boolean flag controlling whether or not to align Depth frames to BGR
+        Boolean flag controlling whether or not to align depth frames to BGR
         frames.
     directory_path: str, optional
         Path to directory that contains the images PNG+EXR files.
         If not given, will use the camera instead.
     png_prefix: str, optional
-        Prefix of PNG files (recording of RGB frames).
+        Prefix of PNG files (recording of BGR frames).
     exr_prefix: str, optional
-        Prefix of EXR files (recording of Depth frames).
+        Prefix of EXR files (recording of depth frames).
     """
 
     def __init__(self,
@@ -78,7 +81,7 @@ class Realsense(AbstractProcess):
             if bgr_sensor is None:
                 raise ValueError("No BGR sensor was found.")
             if depth_sensor is None:
-                raise ValueError("No Depth sensor was found.")
+                raise ValueError("No depth sensor was found.")
 
             bgr_stream = \
                 profile.get_stream(rs.stream.color).as_video_stream_profile()
@@ -88,16 +91,6 @@ class Realsense(AbstractProcess):
             self.bgr_2d_shape = (bgr_stream.height(), bgr_stream.width())
             self.bgr_3d_shape = self.bgr_2d_shape + (3,)
             self.depth_2d_shape = (depth_stream.height(), depth_stream.width())
-
-            self.proc_params["bgr_2d_shape"] = self.bgr_2d_shape
-            self.proc_params["bgr_3d_shape"] = self.bgr_3d_shape
-            self.proc_params["depth_2d_shape"] = self.depth_2d_shape
-
-            bgr_out_shape = self.bgr_3d_shape
-            depth_out_shape = self.depth_2d_shape
-
-            if align_depth_to_bgr:
-                depth_out_shape = self.bgr_2d_shape
 
             pipeline.stop()
         else:
@@ -123,24 +116,27 @@ class Realsense(AbstractProcess):
             self.bgr_2d_shape = self.bgr_3d_shape[:2]
             self.depth_2d_shape = depth_sample_frame.shape
 
-            self.proc_params["bgr_2d_shape"] = self.bgr_2d_shape
-            self.proc_params["bgr_3d_shape"] = self.bgr_3d_shape
-            self.proc_params["depth_2d_shape"] = self.depth_2d_shape
-
             if align_depth_to_bgr:
                 raise NotImplementedError("Aligning Depth frames to BGR "
                                           "frames is not implemented.")
 
-            bgr_out_shape = self.bgr_3d_shape
-            depth_out_shape = self.depth_2d_shape
+        bgr_out_shape = self.bgr_3d_shape
+        depth_out_shape = self.depth_2d_shape
+
+        if align_depth_to_bgr:
+            depth_out_shape = self.bgr_2d_shape
+
+        self.proc_params["bgr_2d_shape"] = self.bgr_2d_shape
+        self.proc_params["bgr_3d_shape"] = self.bgr_3d_shape
+        self.proc_params["depth_2d_shape"] = self.depth_2d_shape
 
         self.bgr_out_port = OutPort(shape=bgr_out_shape)
         self.depth_out_port = OutPort(shape=depth_out_shape)
 
 
-@implements(proc=Realsense, protocol=LoihiProtocol)
+@implements(proc=RealSense, protocol=LoihiProtocol)
 @requires(CPU)
-class LoihiDensePyRealsensePM(PyLoihiProcessModel):
+class LoihiDensePyRealSensePM(PyLoihiProcessModel):
     bgr_out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
     depth_out_port: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
 
@@ -177,7 +173,7 @@ class LoihiDensePyRealsensePM(PyLoihiProcessModel):
         self.depth_out_port.send(depth_image)
 
     def _get_frames(self) -> ty.Tuple[np.ndarray, np.ndarray]:
-        """Get BGR and Depth frames.
+        """Get BGR and depth frames.
 
         If directory_path is None, get frames from camera.
         If directory_path is not None, get frames from files
@@ -196,7 +192,7 @@ class LoihiDensePyRealsensePM(PyLoihiProcessModel):
             return self._get_frames_from_directory()
 
     def _get_frames_from_camera(self) -> ty.Tuple[np.ndarray, np.ndarray]:
-        """Get BGR and Depth frames from camera.
+        """Get BGR and depth frames from camera.
 
         Returns
         ----------
@@ -215,7 +211,7 @@ class LoihiDensePyRealsensePM(PyLoihiProcessModel):
         return bgr_frame, depth_frame
 
     def _get_frames_from_directory(self) -> ty.Tuple[np.ndarray, np.ndarray]:
-        """Get BGR and Depth frames from files.
+        """Get BGR and depth frames from files.
 
         Returns
         ----------
