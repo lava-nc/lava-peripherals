@@ -6,6 +6,9 @@ import sys
 import threading
 import functools
 import multiprocessing
+
+from lava.utils.serialization import load
+
 try:
     from bokeh.plotting import figure, curdoc
     from bokeh.layouts import gridplot, Spacer
@@ -16,11 +19,9 @@ except ModuleNotFoundError:
           " order to run the motion tracking demo.")
     exit()
 from swipe_detection_network import SwipeDetector
-from bokeh.models import Arrow, NormalHead, OpenHead, VeeHead
+from bokeh.models import Arrow, NormalHead
 from bokeh.palettes import Muted3 as color
 from lava.utils.system import Loihi2
-
-
 
 # ==========================================================================
 # Parameters
@@ -28,86 +29,79 @@ from lava.utils.system import Loihi2
 recv_pipe, send_pipe = multiprocessing.Pipe()
 num_steps = 400
 
-
 # Checks whether terminate button has been clicked and allows to stop
 # updating the bokeh doc
-is_done = [False]
+stop_button_pressed: bool = False
 use_loihi2 = Loihi2.is_loihi2_available
-#use_loihi2 = False
-print(use_loihi2)
 
+_, executable = load("swipe_detector.pickle")
 # ==========================================================================
 # Set up network
 # ==========================================================================
 print("initializing network")
 network = SwipeDetector(send_pipe,
                         num_steps,
-                        use_loihi2)
+                        use_loihi2,
+                        executable=executable)
 print("network initialized")
 print(network.frame_input.shape)
+
+
 # ==========================================================================
 # Bokeh Helpers
 # ==========================================================================
-
-
 def callback_run() -> None:
     network.start()
 
 
 def callback_stop() -> None:
-    is_done[0] = True
+    global stop_button_pressed
+    stop_button_pressed = True
     network.stop()
     sys.exit()
 
 
 def create_plot(plot_base_width,
                 data_shape,
-                title,
-                max_value=1) -> (figure, figure.image):
+                title) -> (figure, figure.image):
     x_range = DataRange1d(start=0,
-                        end=data_shape[0],
-                        bounds=(0, data_shape[0]),
-                        range_padding=50,
-                        range_padding_units='percent')
+                          end=data_shape[0],
+                          bounds=(0, data_shape[0]),
+                          range_padding=50,
+                          range_padding_units='percent')
     y_range = DataRange1d(start=0,
-                        end=data_shape[1],
-                        bounds=(0, data_shape[1]),
-                        range_padding=50,
-                        range_padding_units='percent')
+                          end=data_shape[1],
+                          bounds=(0, data_shape[1]),
+                          range_padding=50,
+                          range_padding_units='percent')
 
     pw = plot_base_width
-    #ph = int(pw * data_shape[0] / data_shape[1])
-    ph = 300
-    print(pw)
-    print(ph)
-    print(x_range)
-    print(y_range)
+    ph = int(pw * (data_shape[1] / data_shape[0]))
     plot = figure(width=pw,
-                height=ph,
-                x_range=x_range,
-                y_range=y_range,
-                match_aspect=True,
-                tooltips=[("x", "$x"), ("y", "$y"), ("value", "@image")],
-                toolbar_location=None)
+                  height=ph,
+                  x_range=x_range,
+                  y_range=y_range,
+                  match_aspect=True,
+                  tooltips=[("x", "$x"), ("y", "$y"), ("value", "@image")],
+                  toolbar_location=None)
 
-    nh = NormalHead(fill_color=color[1], fill_alpha=0.5, size=10, line_color=color[2])
+    nh = NormalHead(fill_color=color[1],
+                    fill_alpha=0.5,
+                    size=10,
+                    line_color=color[2])
     arrow = Arrow(end=nh, line_color=color[2], line_width=5,
-                  x_start=0.5, y_start=0.5, x_end=0.5, y_end=0.5)
+                  x_start=data_shape[0] / 2, y_start=data_shape[1] / 2,
+                  x_end=data_shape[0] / 2, y_end=data_shape[1] / 2)
     plot.add_layout(arrow, 'center')
-
     image = plot.image([], x=0, y=0, dw=data_shape[0], dh=data_shape[1],
-                    palette="Viridis256", level="image")
-
+                       palette="Viridis256", level="image")
     plot.add_layout(Title(text=title, align="center"), "above")
-
-
     x_grid = list(range(data_shape[0]))
     plot.xgrid[0].ticker = x_grid
     y_grid = list(range(data_shape[1]))
     plot.ygrid[0].ticker = y_grid
     plot.xgrid.grid_line_color = None
     plot.ygrid.grid_line_color = None
-
     return plot, image, arrow
 
 
@@ -118,8 +112,9 @@ bokeh_document = curdoc()
 
 # create plots
 dvs_frame_p, dvs_frame_im, arrow_bokeh = create_plot(
-    400, (network.frame_input.shape[1],network.frame_input.shape[0]), "DVS file input (max pooling)",
-    max_value=10)
+    400,
+    (network.frame_input.shape[3], network.frame_input.shape[2]),
+    "DVS file input (max pooling)")
 
 # add a button widget and configure with the call back
 button_run = Button(label="Run")
@@ -131,9 +126,9 @@ button_stop.on_click(callback_stop)
 spacer = Spacer(height=40)
 bokeh_document.add_root(
     gridplot([[button_run, None, button_stop],
-            [None, spacer, None],
-            [None, dvs_frame_p, None]],
-            toolbar_options=dict(logo=None)))
+              [None, spacer, None],
+              [None, dvs_frame_p, None]],
+             toolbar_options=dict(logo=None)))
 
 
 # ==========================================================================
@@ -141,14 +136,14 @@ bokeh_document.add_root(
 # ==========================================================================
 def update(dvs_frame, arrow) -> None:
     dvs_frame_im.data_source.data["image"] = [dvs_frame]
-    print(arrow)
-    arrow_bokeh.x_end = (96-arrow[1][0])/96
+    arrow_bokeh.x_end = arrow[1][0]
+
 
 # ==========================================================================
 # Bokeh Main loop
 # ==========================================================================
 def main_loop() -> None:
-    while not is_done[0]:
+    while not stop_button_pressed:
         if recv_pipe.poll():
             data_for_plot_dict = recv_pipe.recv()
             bokeh_document.add_next_tick_callback(

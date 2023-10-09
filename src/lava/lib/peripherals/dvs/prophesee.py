@@ -47,6 +47,10 @@ class PropheseeCamera(AbstractProcess):
         Transformations to be applied to the events before sending them out.
     num_output_time_bins: int
         The number of output time bins to use for the ToFrame transformation.
+    sync_time: bool
+        Whether to
+    flatten: bool
+        Whether to send flattened output.
     """
 
     def __init__(
@@ -59,6 +63,8 @@ class PropheseeCamera(AbstractProcess):
         transformations: Compose = None,
         num_output_time_bins: int = 1,
         out_shape: tuple = None,
+        sync_time: bool = True,
+        flatten: bool= False
     ):
         if not isinstance(max_events_per_dt, int) or max_events_per_dt < 0:
             raise ValueError(
@@ -78,7 +84,8 @@ class PropheseeCamera(AbstractProcess):
 
         self.filename = filename
         self.biases = biases
-
+        self.sync_time = sync_time
+        self.flatten = flatten
         self.max_events_per_dt = max_events_per_dt
         self.filters = filters
         self.transformations = transformations
@@ -130,7 +137,10 @@ class PropheseeCamera(AbstractProcess):
                     data."
                 )
         num_neurons = np.prod(self.shape)
-        self.s_out = OutPort(shape=(num_neurons,))
+        if self.flatten:
+            self.s_out = OutPort(shape=(num_neurons,))
+        else:
+            self.s_out = OutPort(shape=self.shape)
 
         super().__init__(
             shape=self.shape,
@@ -140,6 +150,8 @@ class PropheseeCamera(AbstractProcess):
             max_events_per_dt=self.max_events_per_dt,
             transformations=self.transformations,
             num_output_time_bins=self.num_output_time_bins,
+            sync_time=self.sync_time,
+            flatten=self.flatten
         )
 
 
@@ -163,6 +175,8 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
         self.max_events_per_dt = proc_params["max_events_per_dt"]
         self.biases = proc_params["biases"]
         self.transformations = proc_params["transformations"]
+        self.flatten = proc_params["flatten"]
+        self.sync_time = proc_params["sync_time"]
 
         if self.filename.split('.')[-1] == 'dat':
             self.reader = EventDatReader(self.filename)
@@ -192,30 +206,33 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
         """Load events from DVS, apply filters and transformations and send
         spikes as frame"""
 
-        if self.t_pause is None:
-            self.t_pause = time.time_ns()
+        if self.sync_time:
+            if self.t_pause is None:
+                self.t_pause = time.time_ns()
 
-        if self.t_last_iteration is None:
-            self.t_last_iteration = time.time_ns()
+            if self.t_last_iteration is None:
+                self.t_last_iteration = time.time_ns()
 
-        # Time passed since last iteration
-        t_now = time.time_ns()
+            # Time passed since last iteration
+            t_now = time.time_ns()
 
-        # Load new events since last iteration
-        #if self.t_pause > self.t_last_iteration:
-            # Runtime was paused in the meantime
-        #    delta_t = np.max(
-        #        [10000, (self.t_pause - self.t_last_iteration) // 1000]
-        #    )
-        #    delta_t_drop = np.max([10000, (t_now - self.t_pause) // 1000])
+            # Load new events since last iteration
+            if self.t_pause > self.t_last_iteration:
+                # Runtime was paused in the meantime
+                delta_t = np.max(
+                    [10000, (self.t_pause - self.t_last_iteration) // 1000]
+                )
+                delta_t_drop = np.max([10000, (t_now - self.t_pause) // 1000])
 
-        #    events = self.reader.load_delta_t(delta_t)
-        #    _ = self.reader.load_delta_t(delta_t_drop)
-        #else:
-        # Runtime was not paused in the meantime
-        #delta_t = np.max([10000, (t_now - self.t_last_iteration) // 1000])
-        delta_t = 10000
-        events = self.reader.load_delta_t(delta_t)
+                events = self.reader.load_delta_t(delta_t)
+                _ = self.reader.load_delta_t(delta_t_drop)
+            else:
+                # Runtime was not paused in the meantime
+                delta_t = np.max([10000, (t_now - self.t_last_iteration) // 1000])
+                events = self.reader.load_delta_t(delta_t)
+        else:
+            delta_t = 10000
+            events = self.reader.load_delta_t(delta_t)
 
         # Apply filters to events
         for filter in self.filters:
@@ -238,9 +255,8 @@ class PyPropheseeCameraModel(PyLoihiProcessModel):
             frames = np.zeros(self.s_out.shape)
 
         # Send
-        frames = frames.flatten()
-        print("sending")
-        print(frames.sum().sum())
+        if self.flatten:
+            frames = frames.flatten()
         self.s_out.send(frames)
         self.t_last_iteration = time.time_ns()
 
