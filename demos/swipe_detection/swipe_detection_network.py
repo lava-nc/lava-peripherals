@@ -11,7 +11,7 @@ from lava.magma.core.process.message_interface_enum import ActorType
 from lava.magma.core.run_configs import Loihi2SimCfg, Loihi2HwCfg
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.runtime.runtime import Runtime
-from lava.lib.peripherals.dvs.prophesee import PropheseeCamera
+from lava.lib.peripherals.dvs.prophesee import PropheseeCamera, PyPropheseeCameraRawReaderModel
 from lava.lib.peripherals.dvs.transformation import Compose, MergePolarities, \
     Downsample
 from lava.proc.lif.process import LIF
@@ -21,6 +21,7 @@ from lava.proc.dense.models import PyDenseModelBitAcc
 from lava.proc.lif.models import PyLifModelBitAcc
 from lava.proc.sparse.models import PySparseModelBitAcc
 from lava.proc.embedded_io.spike import NxToPyAdapter, PyToNxAdapter
+from lava.utils.serialization import save
 from outprocess.process_out import ProcessOut
 from scipy.sparse import csr_matrix
 from lava.magma.compiler.subcompilers.nc.ncproc_compiler import CompilerOptions
@@ -89,17 +90,35 @@ class SwipeDetector:
         # Run
         if self.use_loihi2:
             print("running on chip")
-            run_cfg = Loihi2HwCfg()
+            run_cfg = Loihi2HwCfg(exception_proc_model_map=
+                                  {PropheseeCamera: PyPropheseeCameraRawReaderModel})
         else:
             run_cfg = Loihi2SimCfg(
                 exception_proc_model_map={Dense: PyDenseModelBitAcc,
                                           Sparse: PySparseModelBitAcc,
-                                          LIF: PyLifModelBitAcc})
+                                          LIF: PyLifModelBitAcc,
+                                          PropheseeCamera: PyPropheseeCameraRawReaderModel})
 
         # Compilation
         if executable is None:
             compiler = Compiler()
             executable = compiler.compile(self.frame_input, run_cfg=run_cfg)
+        # Store the Lava network, only needed if network changes
+        #save(processes=[self.ff_inp,
+        #                self.ff_left,
+        #                self.rec_left,
+        #                self.lif_left,
+        #                self.ff_right,
+        #                self.rec_right,
+        #                self.lif_right,
+        #                self.sparse_out_left,
+        #                self.sparse_out_right,
+        #                self.sparse_out_left_inv,
+        #                self.sparse_out_right_inv,
+        #                self.out_lif_left,
+        #                self.out_lif_right],
+        #     filename="swipe_detector",
+        #     executable=executable)
 
         # Initialize runtime
         mp = ActorType.MultiProcessing
@@ -164,8 +183,6 @@ class SwipeDetector:
 
         print("Create inp processes")
         self.ff_inp = Sparse(weights=self.ff_weights, num_message_bits=8)
-        print("ff_inp_weights")
-        print(self.ff_weights.shape)
         self.lif_inp = LIF(shape=self.frame_input.shape, **self.lif_config)
 
         print("Create left processes")
@@ -176,18 +193,13 @@ class SwipeDetector:
         print("Create right processes")
         self.ff_right = Sparse(weights=self.ff_weights)
         self.rec_right = Sparse(weights=self.rec_weights_right)
-        print("rec weights")
-        print(self.rec_weights_right.shape)
         self.lif_right = LIF(shape=self.frame_input.shape, **self.lif_config)
 
         print("Create out processes")
-
         self.sparse_out_left = Sparse(weights=self.w_out_left)
         self.sparse_out_right = Sparse(weights=self.w_out_right)
-
         self.sparse_out_left_inv = Sparse(weights=-self.w_out_right)
         self.sparse_out_right_inv = Sparse(weights=-self.w_out_left)
-
         self.out_lif_left = LIF(shape=(self.num_out_neurons,),
                                 **self.lif_config)
         self.out_lif_right = LIF(shape=(self.num_out_neurons,),
@@ -197,7 +209,7 @@ class SwipeDetector:
                                frame_shape=self.frame_input.shape,
                                direction_shape=(self.num_out_neurons,))
 
-        # Additionaly implement Adapters in case loihi 2 is available
+        # Additionally implement Adapters in case loihi 2 is available
         if self.use_loihi2:
             self.in_adapter = PyToNxAdapter(
                 shape=self.flat_shape, num_message_bits=8)
@@ -232,7 +244,6 @@ class SwipeDetector:
         self.sparse_out_left.a_out.connect(self.out_lif_left.a_in)
         self.lif_left.s_out.flatten().connect(self.sparse_out_left_inv.s_in)
         self.sparse_out_left_inv.a_out.connect(self.out_lif_right.a_in)
-
         self.lif_inp.s_out.flatten().connect(self.ff_right.s_in)
         self.ff_right.a_out.reshape(
             self.lif_right.a_in.shape).connect(self.lif_right.a_in)

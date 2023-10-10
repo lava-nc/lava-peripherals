@@ -61,19 +61,19 @@ class PropheseeCamera(AbstractProcess):
     """
 
     def __init__(
-        self,
-        sensor_shape: tuple,
-        filename: str = "",
-        biases: dict = None,
-        filters: list = [],
-        mode: str = "mixed",
-        n_events: int = 10**8,
-        delta_t: int = 1000,
-        transformations: Compose = None,
-        num_output_time_bins: int = 1,
-        out_shape: tuple = None,
-        sync_time: bool = True,
-        flatten: bool = False
+            self,
+            sensor_shape: tuple,
+            filename: str = "",
+            biases: dict = None,
+            filters: list = [],
+            mode: str = "mixed",
+            n_events: int = 10 ** 8,
+            delta_t: int = 1000,
+            transformations: Compose = None,
+            num_output_time_bins: int = 1,
+            out_shape: tuple = None,
+            sync_time: bool = True,
+            flatten: bool = False
     ):
         if not isinstance(n_events, int) or n_events < 0:
             raise ValueError(
@@ -81,8 +81,8 @@ class PropheseeCamera(AbstractProcess):
             )
 
         if (
-            not isinstance(num_output_time_bins, int)
-            or num_output_time_bins < 0
+                not isinstance(num_output_time_bins, int)
+                or num_output_time_bins < 0
         ):
             raise ValueError(
                 "num_output_time_bins must be a positive integer value."
@@ -95,7 +95,6 @@ class PropheseeCamera(AbstractProcess):
         self.biases = biases
         self.sync_time = sync_time
         self.flatten = flatten
-        self.max_events_per_dt = max_events_per_dt
         self.mode = mode
         self.n_events = n_events
         self.delta_t = delta_t
@@ -201,13 +200,14 @@ class EventsIteratorWrapper():
     biases: list
         Bias settings for camera.
     """
+
     def __init__(self,
                  device: str,
                  sensor_shape: tuple,
                  mode: str = "mixed",
                  n_events: int = 1000,
                  delta_t: int = 1000,
-                 biases: dict = None,):
+                 biases: dict = None, ):
         self.true_height, self.true_width = sensor_shape
 
         self.mv_iterator = EventsIterator(input_path=device, mode=mode,
@@ -335,6 +335,7 @@ class PyPropheseeCameraEventsIteratorModel(PyLoihiProcessModel):
 @tag("floating_pt", "raw_reader")
 class PyPropheseeCameraRawReaderModel(PyLoihiProcessModel):
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32)
+
     def __init__(self, proc_params):
         super().__init__(proc_params)
         self.shape = proc_params["shape"]
