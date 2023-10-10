@@ -38,12 +38,10 @@ _, executable = load("swipe_detector.pickle")
 # ==========================================================================
 # Set up network
 # ==========================================================================
-print("initializing network")
 network = SwipeDetector(send_pipe,
                         num_steps,
                         use_loihi2,
                         executable=executable)
-print("network initialized")
 
 
 # ==========================================================================

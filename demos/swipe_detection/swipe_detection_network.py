@@ -181,21 +181,21 @@ class SwipeDetector:
         self.w_out_left[:, 0] = 1  # bug fix
         self.w_out_right[:, 0] = 1  # bug fix
 
-        print("Create inp processes")
+        # Create in processes
         self.ff_inp = Sparse(weights=self.ff_weights, num_message_bits=8)
         self.lif_inp = LIF(shape=self.frame_input.shape, **self.lif_config)
 
-        print("Create left processes")
+        # Create left processes
         self.ff_left = Sparse(weights=self.ff_weights)
         self.rec_left = Sparse(weights=self.rec_weights_left)
         self.lif_left = LIF(shape=self.frame_input.shape, **self.lif_config)
 
-        print("Create right processes")
+        #Create right processes
         self.ff_right = Sparse(weights=self.ff_weights)
         self.rec_right = Sparse(weights=self.rec_weights_right)
         self.lif_right = LIF(shape=self.frame_input.shape, **self.lif_config)
 
-        print("Create out processes")
+        #Create out processes
         self.sparse_out_left = Sparse(weights=self.w_out_left)
         self.sparse_out_right = Sparse(weights=self.w_out_right)
         self.sparse_out_left_inv = Sparse(weights=-self.w_out_right)
