@@ -9,7 +9,7 @@ Lava enables users to develop neuro-inspired applications and map them to neurom
 - Dynamic Vision Cameras
   - Metavision
   - Inivation (coming soon)
-- Intel RealSense cameras (coming soon)
+- Intel RealSense cameras
 - Robotic actuators (to be planned)
   
 
@@ -22,7 +22,11 @@ Lava-peripherals currently requires Linux and does not support Windows or MacOS.
 Lava-peripherals is flexible with the dependency on the libraries for the peripheral hardware and requires only those to be installed which are used. 
 
 ### PropheseeCamera
-The `PropheseeCamera` Process, requires the [metavision-sdk](https://docs.prophesee.ai/stable/installation/index.html) to be installed. 
+The `PropheseeCamera` Process, requires the [metavision-sdk](https://docs.prophesee.ai/stable/installation/index.html) v4.0.0 or newer to be installed. 
+
+### RealSense
+The `RealSense` Process, requires the [Intel® RealSense™ SDK](https://www.intelrealsense.com/sdk-2/) v2.0 and the Python wrapper [pyrealsense2](https://pypi.org/project/pyrealsense2/) to be 
+installed. 
 
 ## Python dependencies
 
