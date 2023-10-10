@@ -12,7 +12,7 @@ from lava.magma.core.run_configs import Loihi2SimCfg, Loihi2HwCfg
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.runtime.runtime import Runtime
 from lava.lib.peripherals.dvs.prophesee import PropheseeCamera
-from lava.lib.peripherals.dvs.transform import Compose, MergePolarities, \
+from lava.lib.peripherals.dvs.transformation import Compose, MergePolarities, \
     Downsample
 from lava.proc.lif.process import LIF
 from lava.proc.dense.process import Dense
