@@ -52,7 +52,6 @@ class ProcessOutModel(PyLoihiProcessModel):
         self.width = self.frame_shape[3]
 
     def run_spk(self):
-
         """Receive spikes and store in an internal variable"""
         frame = self.frame_in.recv()
         left = self.direction_in_left.recv().sum()

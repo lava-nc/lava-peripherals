@@ -12,14 +12,13 @@ from lava.utils.serialization import load
 try:
     from bokeh.plotting import figure, curdoc
     from bokeh.layouts import gridplot, Spacer
-    from bokeh.models import LinearColorMapper, ColorBar, Title, Button
-    from bokeh.models.ranges import DataRange1d
+    from bokeh.models import LinearColorMapper, Title, Button
+    from bokeh.models.ranges import DataRange1d, Arrow, NormalHead
 except ModuleNotFoundError:
     print("Module 'bokeh' is not installed. Please install module 'bokeh' in"
           " order to run the motion tracking demo.")
     exit()
 from swipe_detection_network import SwipeDetector
-from bokeh.models import Arrow, NormalHead
 from bokeh.palettes import Muted3 as color
 from lava.utils.system import Loihi2
 
@@ -34,6 +33,8 @@ num_steps = 400
 stop_button_pressed: bool = False
 use_loihi2 = Loihi2.is_loihi2_available
 
+# This loads a pre-compiled network. If you want to make changes to the net-
+# work uncomment this line.
 _, executable = load("swipe_detector.pickle")
 # ==========================================================================
 # Set up network
@@ -107,7 +108,7 @@ def create_plot(plot_base_width,
 # ==========================================================================
 bokeh_document = curdoc()
 
-# create plots
+# Create plots
 dvs_frame_p, dvs_frame_im, arrow_bokeh = create_plot(
     400,
     (network.frame_input.shape[3], network.frame_input.shape[2]),

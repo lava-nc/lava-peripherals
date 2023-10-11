@@ -55,13 +55,42 @@ weights_default_config = {
     "kernel_size": 20
 }
 
-num_out_neurons_default = 50
-blocking_default_config = False
-
 
 class SwipeDetector:
-    """Class to setup the swipe detection network, compile it, and initialize
-         its runtime."""
+    """
+    Class to setup the swipe detection network, compile it, and initialize
+    its runtime.
+
+    Parameters
+    ----------
+    send_pipe: Pipe
+        Pipe through which to send output results from Lava to vanilla Python.
+    num_steps: int
+        Number of time steps the network should be run.
+    use_loihi2: bool
+        Whether to run on Loihi 2 chip or in simulation.
+    prophesee_input_config: dict, optional
+        Dictionary containing kwargs for the PropheseeCameraProcess. If none
+        is provided the default configuration from above is used.
+    lif_config: dict, optional
+        Dictionary containing kwargs for the LIF Process. If none
+        is provided the default configuration from above is used.
+    weights_config: dict, optional
+        Dictionary containing weights for connecting Processes.If none
+        is provided the default configuration from above is used.
+    num_out_neurons: int, optional
+        Number of output neurons to collect direction information.
+        Default is 50.
+    blocking: bool, optional
+        Whether the network should run in blocking or non-blocking mode.
+        Default is non-blocking.
+    executable: Executable, optional
+        Which executable to use. In case no executable is provided the net-
+        work will be compiled from scratch.
+    path_to_save_network: str, optional
+        Where to store the (generated) executable. If no path is provided the
+        executable will not be saved.
+    """
 
     def __init__(self,
                  send_pipe: type(Pipe),
@@ -70,19 +99,20 @@ class SwipeDetector:
                  prophesee_input_config: ty.Optional[dict] = None,
                  lif_config: ty.Optional[dict] = None,
                  weights_config: ty.Optional[dict] = None,
-                 num_out_neurons: ty.Optional[dict] = None,
-                 blocking: ty.Optional[bool] = None,
-                 executable: ty.Optional[Executable] = None
+                 num_out_neurons: ty.Optional[int] = 50,
+                 blocking: ty.Optional[bool] = False,
+                 executable: ty.Optional[Executable] = None,
+                 path_to_save_network: ty.Optional[str, None] = None
                  ) -> None:
         self.prophesee_input_config = prophesee_input_config or \
             prophesee_input_default_config
         self.lif_config = lif_config or lif_default_config
         self.weights_config = weights_config or weights_default_config
-        self.num_out_neurons = num_out_neurons or num_out_neurons_default
-        self.blocking = blocking or blocking_default_config
         self.send_pipe = send_pipe
         self.num_steps = num_steps
         self.use_loihi2 = use_loihi2
+        self.executable = executable
+        self.path_to_save_network = path_to_save_network
         self._create_processes()
         self._make_connections()
         print("network created")
@@ -100,31 +130,38 @@ class SwipeDetector:
                                           PropheseeCamera: PyPropheseeCameraRawReaderModel})
 
         # Compilation
-        if executable is None:
+        if self.executable is None:
             compiler = Compiler()
-            executable = compiler.compile(self.frame_input, run_cfg=run_cfg)
-        # Store the Lava network, only needed if network changes
-        #save(processes=[self.ff_inp,
-        #                self.ff_left,
-        #                self.rec_left,
-        #                self.lif_left,
-        #                self.ff_right,
-        #                self.rec_right,
-        #                self.lif_right,
-        #                self.sparse_out_left,
-        #                self.sparse_out_right,
-        #                self.sparse_out_left_inv,
-        #                self.sparse_out_right_inv,
-        #                self.out_lif_left,
-        #                self.out_lif_right],
-        #     filename="swipe_detector",
-        #     executable=executable)
+            self.executable = compiler.compile(self.frame_input, run_cfg=run_cfg)
+
+        if self.path_to_save_network is not None:
+            self._store_network_executable()
+
 
         # Initialize runtime
         mp = ActorType.MultiProcessing
         self.runtime = Runtime(exe=executable,
                                message_infrastructure_type=mp)
         self.runtime.initialize()
+
+    def _store_network_executable(self):
+        # Store the Lava network, only needed if network changes
+        save(processes=[self.ff_inp,
+                        self.ff_left,
+                        self.rec_left,
+                        self.lif_left,
+                        self.ff_right,
+                        self.rec_right,
+                        self.lif_right,
+                        self.sparse_out_left,
+                        self.sparse_out_right,
+                        self.sparse_out_left_inv,
+                        self.sparse_out_right_inv,
+                        self.out_lif_left,
+                        self.out_lif_right],
+             filename= self.path_to_save_network,
+             executable=self.executable)
+
 
     def _create_processes(self) -> None:
         # Create Processes and Weights
@@ -133,7 +170,7 @@ class SwipeDetector:
         _, _, self.scaled_height, self.scaled_width = self.frame_input.shape
         self.flat_shape = (self.num_neurons,)
 
-        # create weights
+        # Create weights
         # FF weights
         self.ff_weights = np.eye(self.num_neurons) * self.weights_config["w_ff"]
 
@@ -152,7 +189,7 @@ class SwipeDetector:
         self.rec_weights_left = csr_matrix(
             self.rec_weights_left.reshape((self.num_neurons, self.num_neurons)))
 
-        # right weights
+        # Right weights
         self.rec_weights_right = np.zeros((self.num_neurons, self.num_neurons))
         self.rec_weights_right = self.rec_weights_right.reshape(
             (self.scaled_height, self.scaled_width,

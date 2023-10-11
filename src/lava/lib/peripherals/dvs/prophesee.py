@@ -55,7 +55,7 @@ class PropheseeCamera(AbstractProcess):
     num_output_time_bins: int
         The number of output time bins to use for the ToFrame transformation.
     sync_time: bool
-        Whether to
+        Whether to synchronize camera timestamps with Loihi 2 runtime.
     flatten: bool
         Whether to send flattened output.
     """
