@@ -12,7 +12,7 @@ from lava.utils.serialization import load
 try:
     from bokeh.plotting import figure, curdoc
     from bokeh.layouts import gridplot, Spacer
-    from bokeh.models import LinearColorMapper, Title, Button
+    from bokeh.models import Title, Button
     from bokeh.models.ranges import DataRange1d, Arrow, NormalHead
 except ModuleNotFoundError:
     print("Module 'bokeh' is not installed. Please install module 'bokeh' in"
