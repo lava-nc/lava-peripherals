@@ -102,7 +102,7 @@ class SwipeDetector:
                  num_out_neurons: ty.Optional[int] = 50,
                  blocking: ty.Optional[bool] = False,
                  executable: ty.Optional[Executable] = None,
-                 path_to_save_network: ty.Optional[str, None] = None
+                 path_to_save_network: ty.Optional[str] = None
                  ) -> None:
         self.prophesee_input_config = prophesee_input_config or \
             prophesee_input_default_config
@@ -113,13 +113,14 @@ class SwipeDetector:
         self.use_loihi2 = use_loihi2
         self.executable = executable
         self.path_to_save_network = path_to_save_network
+        self.blocking = blocking
+        self.num_out_neurons = num_out_neurons
         self._create_processes()
         self._make_connections()
         print("network created")
 
         # Run
         if self.use_loihi2:
-            print("running on chip")
             run_cfg = Loihi2HwCfg(exception_proc_model_map=
                                   {PropheseeCamera: PyPropheseeCameraRawReaderModel})
         else:
@@ -137,10 +138,9 @@ class SwipeDetector:
         if self.path_to_save_network is not None:
             self._store_network_executable()
 
-
         # Initialize runtime
         mp = ActorType.MultiProcessing
-        self.runtime = Runtime(exe=executable,
+        self.runtime = Runtime(exe=self.executable,
                                message_infrastructure_type=mp)
         self.runtime.initialize()
 
@@ -161,7 +161,6 @@ class SwipeDetector:
                         self.out_lif_right],
              filename= self.path_to_save_network,
              executable=self.executable)
-
 
     def _create_processes(self) -> None:
         # Create Processes and Weights

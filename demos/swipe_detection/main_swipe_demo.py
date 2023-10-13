@@ -12,8 +12,8 @@ from lava.utils.serialization import load
 try:
     from bokeh.plotting import figure, curdoc
     from bokeh.layouts import gridplot, Spacer
-    from bokeh.models import Title, Button
-    from bokeh.models.ranges import DataRange1d, Arrow, NormalHead
+    from bokeh.models import Title, Button, Arrow, NormalHead
+    from bokeh.models.ranges import DataRange1d
 except ModuleNotFoundError:
     print("Module 'bokeh' is not installed. Please install module 'bokeh' in"
           " order to run the motion tracking demo.")
@@ -26,16 +26,20 @@ from lava.utils.system import Loihi2
 # Parameters
 # ==========================================================================
 recv_pipe, send_pipe = multiprocessing.Pipe()
-num_steps = 400
+num_steps = 220
 
 # Checks whether terminate button has been clicked and allows to stop
 # updating the bokeh doc
 stop_button_pressed: bool = False
 use_loihi2 = Loihi2.is_loihi2_available
 
+
 # This loads a pre-compiled network. If you want to make changes to the net-
 # work uncomment this line.
-_, executable = load("swipe_detector.pickle")
+if use_loihi2:
+    _, executable = load("swipe_detector.pickle")
+else:
+    executable = None
 # ==========================================================================
 # Set up network
 # ==========================================================================
