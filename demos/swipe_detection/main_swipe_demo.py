@@ -6,6 +6,7 @@ import sys
 import threading
 import functools
 import multiprocessing
+import os
 
 from lava.utils.serialization import load
 
@@ -19,7 +20,6 @@ except ModuleNotFoundError:
           " order to run the motion tracking demo.")
     exit()
 from swipe_detection_network import SwipeDetector
-from bokeh.palettes import Muted3 as color
 from lava.utils.system import Loihi2
 
 # ==========================================================================
@@ -33,11 +33,12 @@ num_steps = 220
 stop_button_pressed: bool = False
 use_loihi2 = Loihi2.is_loihi2_available
 
+executable_path = "swipe_detector.pickle"
 
 # This loads a pre-compiled network. If you want to make changes to the net-
 # work uncomment this line.
-if use_loihi2:
-    _, executable = load("swipe_detector.pickle")
+if use_loihi2 and os.path.isfile(executable_path):
+    _, executable = load(executable_path)
 else:
     executable = None
 # ==========================================================================
@@ -46,7 +47,8 @@ else:
 network = SwipeDetector(send_pipe,
                         num_steps,
                         use_loihi2,
-                        executable=executable)
+                        executable=executable,
+                        path_to_save_network=executable_path)
 
 
 # ==========================================================================
@@ -87,11 +89,11 @@ def create_plot(plot_base_width,
                   tooltips=[("x", "$x"), ("y", "$y"), ("value", "@image")],
                   toolbar_location=None)
 
-    nh = NormalHead(fill_color=color[1],
+    nh = NormalHead(fill_color="#ff0000",
                     fill_alpha=0.5,
                     size=10,
-                    line_color=color[2])
-    arrow = Arrow(end=nh, line_color=color[2], line_width=5,
+                    line_color="#ff0000")
+    arrow = Arrow(end=nh, line_color="#ff0000", line_width=5,
                   x_start=data_shape[0] / 2, y_start=data_shape[1] / 2,
                   x_end=data_shape[0] / 2, y_end=data_shape[1] / 2)
     plot.add_layout(arrow, 'center')

@@ -117,7 +117,6 @@ class SwipeDetector:
         self.num_out_neurons = num_out_neurons
         self._create_processes()
         self._make_connections()
-        print("network created")
 
         # Run
         if self.use_loihi2:

@@ -29,7 +29,7 @@ cd lava-peripherals/demos/swipe_detection
 ```
 #### Start the bokeh app
 ```bash
-bokeh serve main_swipe_demo.py --port <port_num>
+SLURM=1 bokeh serve main_swipe_demo.py --port <port_num>
 ```
 
 open your browser and type:
