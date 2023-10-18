@@ -3,6 +3,10 @@
 # See: https://spdx.org/licenses/
 
 import sys
+
+sys.path.append('/home/pplank/lava_dev/lava-peripherals')
+sys.path.append('/home/pplank/lava_dev/lava-peripherals/src')
+
 import threading
 import functools
 import multiprocessing
@@ -21,22 +25,26 @@ except ModuleNotFoundError:
     exit()
 from swipe_detection_network import SwipeDetector
 from lava.utils.system import Loihi2
+from lava.magma.compiler.subcompilers.nc.ncproc_compiler import CompilerOptions
+
+
+CompilerOptions.verbose = True
 
 # ==========================================================================
 # Parameters
 # ==========================================================================
 recv_pipe, send_pipe = multiprocessing.Pipe()
-num_steps = 220
+num_steps = 350
 
 # Checks whether terminate button has been clicked and allows to stop
 # updating the bokeh doc
 stop_button_pressed: bool = False
 use_loihi2 = Loihi2.is_loihi2_available
 
-executable_path = "swipe_detector.pickle"
+executable_path = "swipe_detector_2.pickle"
 
 # This loads a pre-compiled network. If you want to make changes to the net-
-# work uncomment this line.
+# work modify this if statement.
 if use_loihi2 and os.path.isfile(executable_path):
     _, executable = load(executable_path)
 else:
@@ -48,7 +56,7 @@ network = SwipeDetector(send_pipe,
                         num_steps,
                         use_loihi2,
                         executable=executable,
-                        path_to_save_network=executable_path)
+                        path_to_save_network=None)
 
 
 # ==========================================================================
@@ -120,13 +128,13 @@ dvs_frame_p, dvs_frame_im, arrow_bokeh = create_plot(
     (network.frame_input.shape[3], network.frame_input.shape[2]),
     "DVS file input (max pooling)")
 
-# add a button widget and configure with the call back
+# Add a button widget and configure with the call back
 button_run = Button(label="Run")
 button_run.on_click(callback_run)
 
 button_stop = Button(label="Close")
 button_stop.on_click(callback_stop)
-# finalize layout (with spacer as placeholder)
+# Finalize layout (with spacer as placeholder)
 spacer = Spacer(height=40)
 bokeh_document.add_root(
     gridplot([[button_run, None, button_stop],
@@ -140,7 +148,7 @@ bokeh_document.add_root(
 # ==========================================================================
 def update(dvs_frame, arrow) -> None:
     dvs_frame_im.data_source.data["image"] = [dvs_frame]
-    arrow_bokeh.x_end = arrow[1][0]
+    arrow_bokeh.x_end = 40 + (arrow[1][0] - 40) * 2
 
 
 # ==========================================================================
