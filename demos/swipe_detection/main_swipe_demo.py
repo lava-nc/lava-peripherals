@@ -41,7 +41,7 @@ num_steps = 350
 stop_button_pressed: bool = False
 use_loihi2 = Loihi2.is_loihi2_available
 
-executable_path = "swipe_detector_2.pickle"
+executable_path = "swipe_detector.pickle"
 
 # This loads a pre-compiled network. If you want to make changes to the net-
 # work modify this if statement.
