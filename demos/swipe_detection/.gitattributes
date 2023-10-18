@@ -1,2 +1,2 @@
-swipe_detector.picklet filter=lfs diff=lfs merge=lfs -text
+swipe_detector.pickle filter=lfs diff=lfs merge=lfs -text
 hand_swipe.dat filter=lfs diff=lfs merge=lfs -text
