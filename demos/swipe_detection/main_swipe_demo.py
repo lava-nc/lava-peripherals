@@ -3,10 +3,6 @@
 # See: https://spdx.org/licenses/
 
 import sys
-
-sys.path.append('/home/pplank/lava_dev/lava-peripherals')
-sys.path.append('/home/pplank/lava_dev/lava-peripherals/src')
-
 import threading
 import functools
 import multiprocessing
