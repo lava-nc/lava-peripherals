@@ -40,11 +40,13 @@ use_loihi2 = Loihi2.is_loihi2_available
 executable_path = "swipe_detector.pickle"
 
 # This loads a pre-compiled network. If you want to make changes to the net-
-# work modify this if statement.
+# work modify this if statement. If no network is available yet the program
+# will save the generated executable
 if use_loihi2 and os.path.isfile(executable_path):
     _, executable = load(executable_path)
 else:
     executable = None
+    path_to_save_network = executable_path
 # ==========================================================================
 # Set up network
 # ==========================================================================
