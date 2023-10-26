@@ -68,12 +68,13 @@ jobs:
         sudo apt -y install metavision-sdk metavision-sdk-python3.9 >> /dev/null
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.2
+      uses: lava-nc/ci-setup-composite-action@v1.3_py3.9
       with:
         repository: 'Lava'
 
     - name: Run unit tests
       run: |
+        poetry run pip install pyrealsense2
         export PYTHONPATH=$PYTHONPATH:/usr/lib/python3/dist-packages
         poetry run git lfs fetch
         poetry run git lfs pull
