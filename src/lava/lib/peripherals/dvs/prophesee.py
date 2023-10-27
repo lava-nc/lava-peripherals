@@ -48,6 +48,7 @@ class PropheseeCamera(AbstractProcess):
         Default is "mixed".
     n_events: int
         Number of events in the timeslice.
+        (For RawReader) Represents the maximum number of events to be served.
     delta_t: int
         Duration of served event slice in us.
     transformations: Compose
