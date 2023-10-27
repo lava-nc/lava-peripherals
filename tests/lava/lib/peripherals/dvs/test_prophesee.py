@@ -390,7 +390,9 @@ class TestPyPropheseeCameraModel_RawReader(unittest.TestCase):
                 )
             ],
             "n_events": 10**8,
-            "transformations": transformations
+            "transformations": transformations,
+            "sync_time": True,
+            "flatten": False
         }
 
         pm = PyPropheseeCameraRawReaderModel(proc_params)
