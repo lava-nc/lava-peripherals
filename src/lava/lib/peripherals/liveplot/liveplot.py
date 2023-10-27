@@ -16,16 +16,22 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 import time
 
-
 class OpenCVDisplay(AbstractProcess):
-    """Process that receives datas from connected processmodel.
-    The frame data which are needed to display from connected processmodels
-    need a corresponding InPort which is connected to an OutPort.
-    The number of input ports is decided by the number of
-    process models connected to this opencv process model.
+    """ Process that display incoming image with OpenCV.
+
+    This process continuously display grayscale/RGB images coming through its 
+    InPort. The number of input ports is decided by the number of process models 
+    connected to this opencv process model.
+
+    Parameters
+    ----------
+    shape: tuple
+        Shape of the InPort.
+        (height, width) or (height, width, 1) for grayscale images.
+        (height, width, 3) for RGB images.
     """
     def __init__(self,
-                 shape):
+                 shape: tuple):
         super().__init__(shape=shape)
         self.frame_port = InPort(shape=shape)
 
@@ -41,12 +47,16 @@ class OpenCVDisplayPM(PyLoihiProcessModel):
         cv2.namedWindow("Image Display")
 
     def display(self, image):
-        """Visualize images on OpenCV windows
+        """ Visualize images on OpenCV windows.
+
         Takes a NumPy image array formatted as RGBA and sends to OpenCV for
-        visualization.
+        visualization. RGBA image will be converted to grayscale by summing 
+        the color channels. If it's a 2D image, no changes will be made.
+
         Parameters
         ----------
-        image           [np.Array]: NumPy array of rs Image
+        image: np.ndarray
+            Image to display.            
         """
         image = np.array(np.sum(image, axis=2),
                          dtype=np.uint8)
