@@ -33,6 +33,12 @@ class OpenCVDisplay(AbstractProcess):
     def __init__(self,
                  shape: tuple):
         super().__init__(shape=shape)
+        if len(shape) not in (2, 3):
+            raise ValueError("Shape must be in the format (height, width) for \
+                             grayscale or (height, width, 3) for RGB.")
+        if len(shape) == 3 and shape[2] not in (1, 3):
+            raise ValueError("For a 3-channel image, shape must be (height, width, 3). \
+                             For grayscale, use (height, width) or (height, width, 1).")
         self.frame_port = InPort(shape=shape)
 
 
