@@ -35,7 +35,7 @@ class OpenCVDisplay(AbstractProcess):
                  shape: tuple,
                  opencv_window_name: str = "Image Display"):
         super().__init__(shape=shape,
-                         opencv_window_name = opencv_window_name)
+                         opencv_window_name=opencv_window_name)
         if len(shape) not in (2, 3):
             raise ValueError("Shape must be in the format (height, width) for \
                              grayscale or (height, width, 3) for RGB.")
