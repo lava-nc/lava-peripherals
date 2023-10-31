@@ -54,20 +54,26 @@ class PropheseeCamera(AbstractProcess):
         Transformations to be applied to the events before sending them out.
     num_output_time_bins: int
         The number of output time bins to use for the ToFrame transformation.
+    sync_time: bool
+        Whether to synchronize camera timestamps with Loihi 2 runtime.
+    flatten: bool
+        Whether to send flattened output.
     """
 
     def __init__(
-        self,
-        sensor_shape: tuple,
-        filename: str = "",
-        biases: dict = None,
-        filters: list = [],
-        mode: str = "mixed",
-        n_events: int = 10**8,
-        delta_t: int = 1000,
-        transformations: Compose = None,
-        num_output_time_bins: int = 1,
-        out_shape: tuple = None,
+            self,
+            sensor_shape: tuple,
+            filename: str = "",
+            biases: dict = None,
+            filters: list = [],
+            mode: str = "mixed",
+            n_events: int = 10 ** 8,
+            delta_t: int = 1000,
+            transformations: Compose = None,
+            num_output_time_bins: int = 1,
+            out_shape: tuple = None,
+            sync_time: bool = True,
+            flatten: bool = False
     ):
         if not isinstance(n_events, int) or n_events < 0:
             raise ValueError(
@@ -75,8 +81,8 @@ class PropheseeCamera(AbstractProcess):
             )
 
         if (
-            not isinstance(num_output_time_bins, int)
-            or num_output_time_bins < 0
+                not isinstance(num_output_time_bins, int)
+                or num_output_time_bins < 0
         ):
             raise ValueError(
                 "num_output_time_bins must be a positive integer value."
@@ -87,10 +93,11 @@ class PropheseeCamera(AbstractProcess):
 
         self.filename = filename
         self.biases = biases
+        self.sync_time = sync_time
+        self.flatten = flatten
         self.mode = mode
         self.n_events = n_events
         self.delta_t = delta_t
-
         self.filters = filters
         self.transformations = transformations
         self.num_output_time_bins = num_output_time_bins
@@ -140,8 +147,11 @@ class PropheseeCamera(AbstractProcess):
                     "Your transformation is not compatible with the provided \
                     data."
                 )
-
-        self.s_out = OutPort(shape=self.shape)
+        num_neurons = np.prod(self.shape)
+        if self.flatten:
+            self.s_out = OutPort(shape=(num_neurons,))
+        else:
+            self.s_out = OutPort(shape=self.shape)
 
         super().__init__(
             shape=self.shape,
@@ -153,6 +163,8 @@ class PropheseeCamera(AbstractProcess):
             delta_t=self.delta_t,
             transformations=self.transformations,
             num_output_time_bins=self.num_output_time_bins,
+            sync_time=self.sync_time,
+            flatten=self.flatten
         )
 
 
@@ -188,13 +200,14 @@ class EventsIteratorWrapper():
     biases: list
         Bias settings for camera.
     """
+
     def __init__(self,
                  device: str,
                  sensor_shape: tuple,
                  mode: str = "mixed",
                  n_events: int = 1000,
                  delta_t: int = 1000,
-                 biases: dict = None,):
+                 biases: dict = None, ):
         self.true_height, self.true_width = sensor_shape
 
         self.mv_iterator = EventsIterator(input_path=device, mode=mode,
@@ -337,6 +350,8 @@ class PyPropheseeCameraRawReaderModel(PyLoihiProcessModel):
         self.n_events = proc_params["n_events"]
         self.biases = proc_params["biases"]
         self.transformations = proc_params["transformations"]
+        self.flatten = proc_params["flatten"]
+        self.sync_time = proc_params["sync_time"]
 
         if self.filename.split('.')[-1] == 'dat':
             self.reader = EventDatReader(self.filename)
@@ -359,29 +374,40 @@ class PyPropheseeCameraRawReaderModel(PyLoihiProcessModel):
             ),
             dtype=np.uint8,
         )
-        self.t_pause = time.time_ns()
-        self.t_last_iteration = time.time_ns()
+        self.t_pause = None
+        self.t_last_iteration = None
 
     def run_spk(self):
         """Load events from DVS, apply filters and transformations and send
         spikes as frame"""
 
-        # Time passed since last iteration
-        t_now = time.time_ns()
+        if self.sync_time:
+            if self.t_pause is None:
+                self.t_pause = time.time_ns()
 
-        # Load new events since last iteration
-        if self.t_pause > self.t_last_iteration:
-            # Runtime was paused in the meantime
-            delta_t = np.max(
-                [10000, (self.t_pause - self.t_last_iteration) // 1000]
-            )
-            delta_t_drop = np.max([10000, (t_now - self.t_pause) // 1000])
+            if self.t_last_iteration is None:
+                self.t_last_iteration = time.time_ns()
 
-            events = self.reader.load_delta_t(delta_t)
-            _ = self.reader.load_delta_t(delta_t_drop)
+            # Time passed since last iteration
+            t_now = time.time_ns()
+
+            # Load new events since last iteration
+            if self.t_pause > self.t_last_iteration:
+                # Runtime was paused in the meantime
+                delta_t = np.max(
+                    [10000, (self.t_pause - self.t_last_iteration) // 1000]
+                )
+                delta_t_drop = np.max([10000, (t_now - self.t_pause) // 1000])
+
+                events = self.reader.load_delta_t(delta_t)
+                _ = self.reader.load_delta_t(delta_t_drop)
+            else:
+                # Runtime was not paused in the meantime
+                delta_t = np.max([10000,
+                                  (t_now - self.t_last_iteration) // 1000])
+                events = self.reader.load_delta_t(delta_t)
         else:
-            # Runtime was not paused in the meantime
-            delta_t = np.max([10000, (t_now - self.t_last_iteration) // 1000])
+            delta_t = 10000
             events = self.reader.load_delta_t(delta_t)
 
         # Apply filters to events
@@ -405,8 +431,10 @@ class PyPropheseeCameraRawReaderModel(PyLoihiProcessModel):
             frames = np.zeros(self.s_out.shape)
 
         # Send
+        if self.flatten:
+            frames = frames.flatten()
         self.s_out.send(frames)
-        self.t_last_iteration = t_now
+        self.t_last_iteration = time.time_ns()
 
     def _pause(self):
         """Pause was called by the runtime"""
