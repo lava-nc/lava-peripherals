@@ -77,3 +77,8 @@ class OpenCVDisplayPM(PyLoihiProcessModel):
     def run_spk(self):
         frame = self.frame_port.recv()
         self.display(frame)
+
+    def _stop(self):
+        cv2.destroyWindow()
+        super()._stop()
+        
