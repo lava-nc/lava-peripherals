@@ -81,4 +81,3 @@ class OpenCVDisplayPM(PyLoihiProcessModel):
     def _stop(self):
         cv2.destroyWindow()
         super()._stop()
-        
