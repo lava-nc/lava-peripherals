@@ -39,7 +39,7 @@ jobs:
         with:
           lfs: true
 
-      - name: Download lava artifact
+      - name: Download lava-peripherals artifact
         uses: actions/download-artifact@v3
         with:
           name: lava-peripherals
@@ -78,7 +78,7 @@ jobs:
     needs: [build-artifacts, test-artifact-install]
    
     steps:
-      - name: Download lava artifact
+      - name: Download lava-peripherals artifact
         uses: actions/download-artifact@v3
         with:
           name: lava-peripherals
@@ -134,6 +134,7 @@ jobs:
     if: github.triggering_actor == 'mgkwill' || github.triggering_actor == 'PhilippPlank' || github.triggering_actor == 'tim-shea'
     permissions:
       contents: write
+      id-token: write
     needs: [build-artifacts, test-artifact-install, test-artifact-use]
    
     steps:
@@ -146,7 +147,7 @@ jobs:
         with:
           repository: 'lava-peripherals'
 
-      - name: Download lava artifact
+      - name: Download lava-peripherals artifact
         uses: actions/download-artifact@v3
         with:
           name: lava-peripherals
@@ -157,7 +158,6 @@ jobs:
           [[ "$(pipx run poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || echo prerelease=true >> $GITHUB_OUTPUT
           echo "release-version=$(pipx run poetry version --short)" >> $GITHUB_OUTPUT
           echo "release-commit=$(git log -n 1 --pretty=format:"%H")" >> $GITHUB_OUTPUT
-
       - name: Print Versions
         run: |
           [[ "$(pipx run poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || echo prerelease=true
@@ -171,7 +171,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           draft: true
           prerelease: steps.check-version.outputs.prerelease == 'true'
-          name: "Lava ${{ steps.check-version.outputs.release-version }}"
+          name: "Lava Peripherals ${{ steps.check-version.outputs.release-version }}"
           commit: "${{ steps.check-version.outputs.release-commit }}"
           tag: "v${{ steps.check-version.outputs.release-version }}"
           discussionCategory: "Announcements"
@@ -179,12 +179,27 @@ jobs:
           generateReleaseNotes: true
           makeLatest: true
 
+      - name: Mint Github API token
+        id: mint-token
+        run: |
+          # retrieve OIDC token
+          resp=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=pypi")
+          oidc_token=$(jq '.value' <<< "${resp}")
+
+          # exchange OIDC token for API token
+          resp=$(curl -X POST https://pypi.org/_/oidc/github/mint-token -d "{\"token\": \"${oidc_token}\"}")
+          api_token=$(jq '.token' <<< "${resp}")
+
+          # mask the API token, to prevent leaking it
+          echo "::add-mask::${api_token}"
+
+          echo "api-token=${api_token}" >> "${GITHUB_OUTPUT}"
+
       - name: Publish to PyPI
         if: steps.check-version.outputs.prerelease != 'true'
-        env:
-          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
         run: |
+          poetry config pypi-token.pypi ${{ steps.mint-token.outputs.api-token }}
           mkdir dist
           cp lava* dist/.
-          # poetry config repositories.testpypi https://test.pypi.org/legacy/
-          poetry publish --dry-run
+          poetry publish
