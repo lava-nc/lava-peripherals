@@ -67,8 +67,8 @@ jobs:
           rm -rf artifact-test
 
 
-  test-artifact-use:
-    name: Test Artifact With Unit Tests
+  test-artifact-use-tar:
+    name: Test tar Artifact With Unit Tests
     runs-on: self-hosted
     needs: [build-artifacts, test-artifact-install]
    
@@ -98,6 +98,16 @@ jobs:
           cd ../
           rm -rf tmp
 
+  test-artifact-use-whl:
+    name: Test whl Artifact With Unit Tests
+    runs-on: self-hosted
+    needs: [build-artifacts, test-artifact-install]
+   
+    steps:
+      - name: Download lava artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: lava-peripherals
       - name: Test artifact .whl
         run: |
           rm -rf tmp
@@ -130,7 +140,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    needs: [build-artifacts, test-artifact-install, test-artifact-use]
+    needs: [build-artifacts, test-artifact-install, test-artifact-use-tar, test-artifact-use-whl]
    
     steps:
       - uses: actions/checkout@v3
