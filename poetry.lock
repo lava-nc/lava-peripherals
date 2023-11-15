@@ -2215,10 +2215,10 @@ files = [
 [package.dependencies]
 numpy = [
     {version = ">=1.21.0", markers = "python_version <= \"3.9\" and platform_system == \"Darwin\" and platform_machine == \"arm64\" and python_version >= \"3.8\""},
-    {version = ">=1.21.4", markers = "python_version >= \"3.10\" and platform_system == \"Darwin\""},
-    {version = ">=1.21.2", markers = "platform_system != \"Darwin\" and python_version >= \"3.10\""},
     {version = ">=1.19.3", markers = "platform_system == \"Linux\" and platform_machine == \"aarch64\" and python_version >= \"3.8\" and python_version < \"3.10\" or python_version > \"3.9\" and python_version < \"3.10\" or python_version >= \"3.9\" and platform_system != \"Darwin\" and python_version < \"3.10\" or python_version >= \"3.9\" and platform_machine != \"arm64\" and python_version < \"3.10\""},
     {version = ">=1.17.3", markers = "(platform_system != \"Darwin\" and platform_system != \"Linux\") and python_version >= \"3.8\" and python_version < \"3.9\" or platform_system != \"Darwin\" and python_version >= \"3.8\" and python_version < \"3.9\" and platform_machine != \"aarch64\" or platform_machine != \"arm64\" and python_version >= \"3.8\" and python_version < \"3.9\" and platform_system != \"Linux\" or (platform_machine != \"arm64\" and platform_machine != \"aarch64\") and python_version >= \"3.8\" and python_version < \"3.9\""},
+    {version = ">=1.21.4", markers = "python_version >= \"3.10\" and platform_system == \"Darwin\""},
+    {version = ">=1.21.2", markers = "platform_system != \"Darwin\" and python_version >= \"3.10\""},
 ]
 
 [[package]]
@@ -2718,6 +2718,28 @@ files = [
 
 [package.dependencies]
 tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
+
+[[package]]
+name = "pyrealsense2"
+version = "2.54.2.5684"
+description = "Python Wrapper for Intel Realsense SDK 2.0."
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyrealsense2-2.54.2.5684-cp310-cp310-manylinux1_x86_64.whl", hash = "sha256:c49ac2ca7550b896670bc94113e2e13c672cba6e5ca8aa646dcb3c8f9545a552"},
+    {file = "pyrealsense2-2.54.2.5684-cp310-cp310-win_amd64.whl", hash = "sha256:21ea9db6f80b425d6435dfc78add39620749107069a4d20d66a191df614f5622"},
+    {file = "pyrealsense2-2.54.2.5684-cp311-cp311-manylinux1_x86_64.whl", hash = "sha256:95953633b97306742e689706d5bfc2fef7f848fde10ce49d080d26ff4b4d0483"},
+    {file = "pyrealsense2-2.54.2.5684-cp311-cp311-win_amd64.whl", hash = "sha256:8b7036c43f332ddf116d200ff4fcdee2b69f845b7dad55415764e6b90c40723a"},
+    {file = "pyrealsense2-2.54.2.5684-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:ed8c6421b7dd9efda33723aced0a0720ac053abc0d6fb11343c82c430a241be2"},
+    {file = "pyrealsense2-2.54.2.5684-cp37-cp37m-manylinux2014_aarch64.whl", hash = "sha256:4c2a136cd7f6b65b858fe3de6129170d56172452cd36122b57ed662071a02be8"},
+    {file = "pyrealsense2-2.54.2.5684-cp37-cp37m-win_amd64.whl", hash = "sha256:836b44ed4b47b6633d1e8a4fcabfbf7c89454980ba70ceab017bd5b78b55f8f0"},
+    {file = "pyrealsense2-2.54.2.5684-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:104f61d4bce6bbdc8a859020c11efede1d1bce867adf4725a31bd34723640677"},
+    {file = "pyrealsense2-2.54.2.5684-cp38-cp38-manylinux2014_aarch64.whl", hash = "sha256:f3eb5cb41ab1c58c1809624473e67db43f2cfa46c780d130a2a607328fba91a1"},
+    {file = "pyrealsense2-2.54.2.5684-cp38-cp38-win_amd64.whl", hash = "sha256:c8db6c2b1abbf7bacaad8b670533351335a8cf639bf0f6a347d56cf6b7059eb0"},
+    {file = "pyrealsense2-2.54.2.5684-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:b8be634e01023a8a052aac5c7e53f0b4e2dea048d05051d91de15bb7ad8c5833"},
+    {file = "pyrealsense2-2.54.2.5684-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:a42b27b29ce13110cdd1a20fd99d732a1ba3fc601f86686f9567b62ba864ef2b"},
+    {file = "pyrealsense2-2.54.2.5684-cp39-cp39-win_amd64.whl", hash = "sha256:fe63ab1aa223e1e360f10f2625cbab5da711a8372bf4b43f37b71b6163f2feb3"},
+]
 
 [[package]]
 name = "pytest"
@@ -3826,4 +3848,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "a9401609d7c07cf7cc85c382a1a57bd38ccfc071b1dd0328d35645311bbde5b5"
+content-hash = "bdf759df683d1b245cd24f03cde1d3d5d5834a5a0dd02414a61e27b630f89595"
