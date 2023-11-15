@@ -51,7 +51,7 @@ jobs:
           artifact=$(ls | grep lava | grep tar)
           pip install --no-input $artifact
           python -c 'import lava.lib.peripherals.dvs.prophesee'
-          pip uninstall -y $artifact
+          pip uninstall -y lava-peripherals
           deactivate
           rm -rf artifact-test
 
@@ -62,7 +62,7 @@ jobs:
           artifact=$(ls | grep lava | grep whl)
           pip install --no-input $artifact
           python -c 'import lava.lib.peripherals.dvs.prophesee'
-          pip uninstall -y $artifact
+          pip uninstall -y lava-peripherals
           deactivate
           rm -rf artifact-test
 
