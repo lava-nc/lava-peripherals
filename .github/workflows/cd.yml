@@ -80,6 +80,7 @@ jobs:
 
       - name: Test artifact tar.gz
         run: |
+          rm -rf tmp
           mkdir tmp
           cd tmp
           cp ../lava* .
@@ -99,6 +100,7 @@ jobs:
 
       - name: Test artifact .whl
         run: |
+          rm -rf tmp
           mkdir tmp
           cd tmp
           cp ../lava* .
