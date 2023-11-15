@@ -31,7 +31,7 @@ jobs:
 
   test-artifact-install:
     name: Test Artifact Install
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build-artifacts
    
     steps:
@@ -74,7 +74,7 @@ jobs:
 
   test-artifact-use:
     name: Test Artifact With Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [build-artifacts, test-artifact-install]
    
     steps:
