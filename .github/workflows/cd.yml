@@ -31,7 +31,7 @@ jobs:
 
   test-artifact-install:
     name: Test Artifact Install
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build-artifacts
    
     steps:
@@ -44,37 +44,32 @@ jobs:
         with:
           name: lava-peripherals
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-
       - name: Test artifact tar.gz
         run: |
-          python3 -m venv artifact-test
+          python3.9 -m venv --system-site-packages artifact-test
           source artifact-test/bin/activate
           artifact=$(ls | grep lava | grep tar)
           pip install --no-input $artifact
           python -c 'import lava.lib.peripherals.dvs.prophesee'
-          pip uninstall -y $artifact
+          pip uninstall -y lava-peripherals
           deactivate
           rm -rf artifact-test
 
       - name: Test artifact .whl
         run: |
-          python3 -m venv artifact-test
+          python3.9 -m venv --system-site-packages artifact-test
           source artifact-test/bin/activate
           artifact=$(ls | grep lava | grep whl)
           pip install --no-input $artifact
           python -c 'import lava.lib.peripherals.dvs.prophesee'
-          pip uninstall -y $artifact
+          pip uninstall -y lava-peripherals
           deactivate
           rm -rf artifact-test
 
 
   test-artifact-use:
     name: Test Artifact With Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [build-artifacts, test-artifact-install]
    
     steps:
@@ -83,17 +78,12 @@ jobs:
         with:
           name: lava-peripherals
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-
       - name: Test artifact tar.gz
         run: |
           mkdir tmp
           cd tmp
           cp ../lava* .
-          python3 -m venv artifact-unittest
+          python3.9 -m venv --system-site-packages artifact-unittest
           source artifact-unittest/bin/activate
           pip install -U pip
           pip install "nbconvert>=7.2.10,<7.3" pytest>=7.2.0 matplotlib>=3.5.1 ipykernel>=6.15.0 nbformat>=5.3.0
@@ -112,7 +102,7 @@ jobs:
           mkdir tmp
           cd tmp
           cp ../lava* .
-          python3 -m venv artifact-unittest
+          python3.9 -m venv --system-site-packages artifact-unittest
           source artifact-unittest/bin/activate
           pip install -U pip
           pip install "nbconvert>=7.2.10,<7.3" pytest>=7.2.0 matplotlib>=3.5.1 ipykernel>=6.15.0 nbformat>=5.3.0
@@ -132,7 +122,11 @@ jobs:
     name: Upload release artifact
     runs-on: ubuntu-latest
     if: github.triggering_actor == 'mgkwill' || github.triggering_actor == 'PhilippPlank' || github.triggering_actor == 'tim-shea'
+    environment:
+      name: pypi
+      url: https://pypi.org/p/lava-peripherals
     permissions:
+      id-token: write
       contents: write
     needs: [build-artifacts, test-artifact-install, test-artifact-use]
    
@@ -171,7 +165,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           draft: true
           prerelease: steps.check-version.outputs.prerelease == 'true'
-          name: "Lava ${{ steps.check-version.outputs.release-version }}"
+          name: "Lava Peripherals ${{ steps.check-version.outputs.release-version }}"
           commit: "${{ steps.check-version.outputs.release-commit }}"
           tag: "v${{ steps.check-version.outputs.release-version }}"
           discussionCategory: "Announcements"
@@ -181,10 +175,10 @@ jobs:
 
       - name: Publish to PyPI
         if: steps.check-version.outputs.prerelease != 'true'
-        env:
-          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
         run: |
           mkdir dist
           cp lava* dist/.
-          # poetry config repositories.testpypi https://test.pypi.org/legacy/
-          poetry publish --dry-run
+
+      - name: Publish package distributions to PyPI
+        if: steps.check-version.outputs.prerelease != 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
