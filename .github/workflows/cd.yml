@@ -132,7 +132,11 @@ jobs:
     name: Upload release artifact
     runs-on: ubuntu-latest
     if: github.triggering_actor == 'mgkwill' || github.triggering_actor == 'PhilippPlank' || github.triggering_actor == 'tim-shea'
+    environment:
+      name: pypi
+      url: https://pypi.org/p/lava-peripherals
     permissions:
+      id-token: write
       contents: write
     needs: [build-artifacts, test-artifact-install, test-artifact-use]
    
@@ -171,7 +175,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           draft: true
           prerelease: steps.check-version.outputs.prerelease == 'true'
-          name: "Lava ${{ steps.check-version.outputs.release-version }}"
+          name: "Lava Peripherals ${{ steps.check-version.outputs.release-version }}"
           commit: "${{ steps.check-version.outputs.release-commit }}"
           tag: "v${{ steps.check-version.outputs.release-version }}"
           discussionCategory: "Announcements"
@@ -181,10 +185,10 @@ jobs:
 
       - name: Publish to PyPI
         if: steps.check-version.outputs.prerelease != 'true'
-        env:
-          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
         run: |
           mkdir dist
           cp lava* dist/.
-          # poetry config repositories.testpypi https://test.pypi.org/legacy/
-          poetry publish --dry-run
+
+      - name: Publish package distributions to PyPI
+        if: steps.check-version.outputs.prerelease != 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
