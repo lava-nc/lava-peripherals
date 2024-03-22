@@ -13,6 +13,7 @@ from lava.lib.peripherals.dvs.transformation import (
     MergePolarities,
     MirrorHorizontally,
     MirrorVertically,
+    Crop,
 )
 
 from metavision_core.event_io import RawReader
@@ -210,3 +211,42 @@ class TestCompose(unittest.TestCase):
         self.assertEqual(output_shape.width, int(width) * downsampling_factor)
         self.assertEqual(output_shape.height, int(height) * downsampling_factor)
         self.assertEqual(output_shape.polarities, 1)
+
+
+class TestCrop(unittest.TestCase):
+    def test_transform(self):
+
+        reader = RawReader(SEQUENCE_FILENAME_RAW)
+
+        delta_t = 100000
+
+        events = reader.load_delta_t(delta_t)
+        x = 100
+        width = 100
+        y = 100
+        height = 200
+        transforms = Crop(x=x, width=width, y=y, height=height)
+
+        transformed_events = copy.deepcopy(events)
+        transformed_events = transforms(transformed_events)
+
+        self.assertTrue(np.all(transformed_events['x'] <= width))
+        self.assertTrue(np.all(transformed_events['y'] <= height))
+
+    def test_shape_transform(self):
+
+        reader = RawReader(SEQUENCE_FILENAME_RAW)
+        height, width = reader.get_size()
+        event_volume = EventVolume(height=height, width=width, polarities=2)
+
+        x = 100
+        width = 100
+        y = 100
+        height = 200
+        transforms = Crop(x=x, width=width, y=y, height=height)
+
+        output_shape = transforms.determine_output_shape(event_volume)
+
+        self.assertEqual(output_shape.width, int(width))
+        self.assertEqual(output_shape.height, int(height))
+        self.assertEqual(output_shape.polarities, 2)

@@ -282,3 +282,74 @@ class MirrorVertically(Transformation):
             Shape of the outcoming events.
         """
         return input_shape
+
+class Crop(Transformation):
+    def __init__(self, x: int, width, y: int, height: int):
+        """Crops events starting at x/y for wight/height pixels.
+
+        Parameters
+        ----------
+        x: int
+            Start index for x dimension.
+        width: int
+            Num pixels in x dimension.
+        y: int
+            Start index for y dimension.
+        height: int
+            Num pixels in y dimension.
+        """
+        super().__init__()
+        self.x = x
+        self.width = width
+        self.y = y
+        self.height = height
+
+    def __call__(self, events: np.ndarray) -> np.ndarray:
+        """Crop events given x/y and width/height.
+
+        Parameters
+        ----------
+        events: np.ndarray
+            DVS events
+        Returns
+        -------
+        events: np.ndarray
+            Transformed DVS events
+        """
+        print(len(events))
+        idx = np.where(events["x"] >= self.x + self.width)[0]
+        events = np.delete(events, idx)
+        idx = np.where(events["x"] < self.x)[0]
+        events = np.delete(events, idx)
+
+        idx = np.where(events["y"] >= self.y + self.height)[0]
+        events = np.delete(events, idx)
+        idx = np.where(events["y"] < self.y)[0]
+        events = np.delete(events, idx)
+
+        events['x'] -= self.x
+        events['y'] -= self.y
+
+        print(len(events))
+
+        return events
+
+    def determine_output_shape(self, input_shape: EventVolume) -> EventVolume:
+        """Determine output shape.
+
+        Parameters
+        ----------
+        input_shape: EventVolume
+            Shape of the incoming events.
+
+        Returns
+        -------
+        output_shape: EventVolume
+            Shape of the outcoming events.
+        """
+        output_shape = copy.deepcopy(input_shape)
+        output_shape.width = self.width
+        output_shape.height = self.height
+        return output_shape
+
+

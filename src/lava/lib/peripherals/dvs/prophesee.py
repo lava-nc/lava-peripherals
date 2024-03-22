@@ -74,7 +74,8 @@ class PropheseeCamera(AbstractProcess):
             num_output_time_bins: int = 1,
             out_shape: tuple = None,
             sync_time: bool = True,
-            flatten: bool = False
+            flatten: bool = False,
+            crop: int = None,
     ):
         if not isinstance(n_events, int) or n_events < 0:
             raise ValueError(
@@ -102,6 +103,7 @@ class PropheseeCamera(AbstractProcess):
         self.filters = filters
         self.transformations = transformations
         self.num_output_time_bins = num_output_time_bins
+        self.crop = crop
 
         height, width = sensor_shape
 
@@ -120,10 +122,12 @@ class PropheseeCamera(AbstractProcess):
                 event_shape.height,
                 event_shape.width,
             )
+        print(self.shape)
 
         # Check whether provided transformation is valid
         if self.transformations is not None:
             try:
+
                 # Generate some artificial data
                 n_random_spikes = 1000
                 test_data = np.zeros(
@@ -156,6 +160,7 @@ class PropheseeCamera(AbstractProcess):
 
         super().__init__(
             shape=self.shape,
+            sensor_shape=sensor_shape,
             biases=self.biases,
             filename=self.filename,
             filters=self.filters,
@@ -165,7 +170,8 @@ class PropheseeCamera(AbstractProcess):
             transformations=self.transformations,
             num_output_time_bins=self.num_output_time_bins,
             sync_time=self.sync_time,
-            flatten=self.flatten
+            flatten=self.flatten,
+            crop=self.crop,
         )
 
 
@@ -315,6 +321,7 @@ class PyPropheseeCameraEventsIteratorModel(PyLoihiProcessModel):
         else:
             frames = np.zeros(self.s_out.shape)
 
+        print(frames.sum())
         self.s_out.send(frames)
 
     def _pause(self):
@@ -339,13 +346,14 @@ class PyPropheseeCameraRawReaderModel(PyLoihiProcessModel):
 
     def __init__(self, proc_params):
         super().__init__(proc_params)
-        self.shape = proc_params["shape"]
-        (
-            self.num_output_time_bins,
-            self.polarities,
-            self.height,
-            self.width,
-        ) = self.shape
+        self.sensor_shape = proc_params['sensor_shape']
+        # self.shape = proc_params["shape"]
+        # (
+        #     self.num_output_time_bins,
+        #     self.polarities,
+        #     self.height,
+        #     self.width,
+        # ) = self.shape
         self.filename = proc_params["filename"]
         self.filters = proc_params["filters"]
         self.n_events = proc_params["n_events"]
@@ -353,6 +361,7 @@ class PyPropheseeCameraRawReaderModel(PyLoihiProcessModel):
         self.transformations = proc_params["transformations"]
         self.flatten = proc_params["flatten"]
         self.sync_time = proc_params["sync_time"]
+        self.crop = proc_params["crop"]
 
         if self.filename.split('.')[-1] == 'dat':
             self.reader = EventDatReader(self.filename)
@@ -366,12 +375,17 @@ class PyPropheseeCameraRawReaderModel(PyLoihiProcessModel):
             for k, v in self.biases.items():
                 device_biases.set(k, v)
 
+        print("CAM", self.reader)
         self.volume = np.zeros(
             (
-                self.num_output_time_bins,
-                self.polarities,
-                self.height,
-                self.width,
+                # self.num_output_time_bins,
+                # self.polarities,
+                # self.height,
+                # self.width,
+                1,
+                2,
+                self.sensor_shape[0],
+                self.sensor_shape[1],
             ),
             dtype=np.uint8,
         )
@@ -381,6 +395,9 @@ class PyPropheseeCameraRawReaderModel(PyLoihiProcessModel):
     def run_spk(self):
         """Load events from DVS, apply filters and transformations and send
         spikes as frame"""
+
+        if self.reader.is_done():
+            self.reader.reset()
 
         if self.sync_time:
             if self.t_pause is None:
@@ -431,10 +448,19 @@ class PyPropheseeCameraRawReaderModel(PyLoihiProcessModel):
         else:
             frames = np.zeros(self.s_out.shape)
 
+
+
+        if self.crop:
+            shape = frames.shape
+            x = (shape[2] - self.crop) // 2
+            y = (shape[3] - self.crop) // 2
+            frames = frames[:, :, x:x+self.crop, y:y+self.crop]
         # Send
         if self.flatten:
             frames = frames.flatten()
-        self.s_out.send(frames)
+
+        print("CAM",frames.max(), frames.min(), frames.astype(np.int16).sum(), frames[0].T.shape, frames[:, 0].astype(np.int16).sum() -frames[:, 1].astype(np.int16).sum())
+        self.s_out.send(frames.astype(np.int16)[0].T)
         self.t_last_iteration = time.time_ns()
 
     def _pause(self):
