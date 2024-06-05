@@ -1,3 +1,7 @@
+# Copyright (C) 2023 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import numpy as np
 import time
 import threading
@@ -24,13 +28,18 @@ class InivationCamera(AbstractProcess):
 
     Parameters:
     -----------
-        camera_type (str, optional): Specify which camera to use. Only used when multiple cameras connected. Defaults to None.
-        noise_filter (str, optional): Type of noise filter to apply to the data. Defaults to None.
-        filename (str, optional): Path to the data if reading from file. Defaults to None.
-        flatten (bool, optional): Whether to flatten the output data array. Defaults to True.
-        crop_params (tuple, optional): A tuple (crop_x_l, crop_x_r, crop_y_t, crop_y_b) specifying the
-            left, right, top, and bottom cropping boundaries. These values define the margins
-            of cropping:
+        camera_type: str, optional
+            Specify which camera to use. Only used when multiple cameras connected. Defaults to None.
+        noise_filter: str, optional
+            Type of noise filter to apply to the data. Defaults to None.
+        filename: str, optional
+            Path to the data if reading from file. Defaults to None.
+        flatten: bool, optional
+            Whether to flatten the output data array. Defaults to True.
+        crop_params: tuple, optional
+            A tuple (crop_l, crop_r, crop_t, crop_b) specifying the
+            left, right, top, and bottom cropping boundaries.
+            Margin definitions of cropping:
             - crop_x_l is the left boundary (inclusive),
             - crop_x_r is the right boundary (exclusive),
             - crop_y_t is the top boundary (inclusive),
@@ -44,8 +53,8 @@ class InivationCamera(AbstractProcess):
                 noise_filter: str = None,
                 filename: str = None,
                 flatten: bool = False,
-                crop_params:list = None,
-            ) -> None:
+                crop_params: list = None,
+        ) -> None:
 
         self.filename = filename
         self.flatten = flatten
@@ -83,7 +92,7 @@ class InivationCamera(AbstractProcess):
             self.crop_params = None
 
         if self.flatten:
-            self.out_shape = (np.prod(self.out_shape),)
+            self.out_shape = (np.prod(self.out_shape), )
 
         self.s_out = OutPort(shape=self.out_shape)
 
@@ -103,21 +112,24 @@ class InivationCamera(AbstractProcess):
     def __assert_correct_crop_params(self, crop_params) -> None:
         if crop_params is not None:
             if len(crop_params) != 4:
-                raise ValueError(f"Crop parameter list should be in x_l, x_r, y_t, y_b format. Recieved {len(crop_params)} long list.")
+                raise ValueError(
+                    f"Crop arguments should be x_l, x_r, y_t, y_b."
+                )
 
 
 class CameraThread():
     """
-    This object keeps the camera recording and storing to the event queue in a background thread
+    This object keeps stores events to the queue in a background thread
     """
     def __init__(self,
                 camera_type,
-                ) -> None:
-
+            ) -> None:
         self.camera_type = camera_type
         self.stop = False
         self.sync = False
-        self.cam_thread = threading.Thread(target=self.store_events, daemon=False)
+        self.cam_thread = threading.Thread(
+            target=self.store_events, daemon=False
+        )
         self.queue = SimpleQueue()
 
         # Buffer to hold events
@@ -127,7 +139,9 @@ class CameraThread():
         self._camera = dv.io.CameraCapture(self.camera_type)
         # Set DAVIS cams to only output events - disables frame capture
         if self._camera.getCameraName().find("DAVIS") != -1:
-            self._camera.setDavisReadoutMode(dv.io.CameraCapture.DavisReadoutMode.EventsOnly)
+            self._camera.setDavisReadoutMode(
+                dv.io.CameraCapture.DavisReadoutMode.EventsOnly
+            )
 
     # Return the starting time of data gathering in milliseconds
     def get_starttime(self) -> None:
@@ -145,7 +159,8 @@ class CameraThread():
 
     def store_events(self) -> None:
         while self.stop is not True:
-            # Get batch of events from camera - NOTE: If no sync flag then this function continually drains the camera buffer
+            # Get batch of events from camera
+            # NOTE: If no sync flag then this continually drains the cam buffer
             batch = self._camera.getNextEventBatch()
 
             if self.sync is True:
@@ -177,7 +192,6 @@ class PySparseInivationCameraModel(PyLoihiProcessModel):
         self.noise_filter = proc_params["noise_filter"]
         self.flatten = proc_params["flatten"]
         self.crop_params = proc_params["crop_params"]
-
         self.start_time = None
 
         self.reader = CameraThread(
@@ -203,7 +217,12 @@ class PySparseInivationCameraModel(PyLoihiProcessModel):
 
             # Apply any preprocessing steps
             if self.crop_params is not None:
-                data, indices = preproc.crop(data, indices, cam_shape=self.cam_shape, crop_params=self.crop_params, out_shape=self.out_shape)
+                data, indices = preproc.crop(data,
+                                            indices,
+                                            self.cam_shape,
+                                            self.crop_params,
+                                            self.out_shape
+                                        )
         else:
             data = np.zeros(self.out_shape)
             indices = np.zeros(self.out_shape)
@@ -211,12 +230,12 @@ class PySparseInivationCameraModel(PyLoihiProcessModel):
         # Output spikes
         self.s_out.send(data, indices)
 
-    def _create_sparse_vector(self, event_batch) -> ty.Tuple[np.ndarray, np.ndarray]:
+    def _create_sparse_vector(self, evs) -> ty.Tuple[np.ndarray, np.ndarray]:
         """ Create sparse vector from an event batch"""
-        data = event_batch.polarities()
-        coords = event_batch.coordinates()
-        x = coords[:,0]
-        y = coords[:,1]
+        data = evs.polarities()
+        coords = evs.coordinates()
+        x = coords[:, 0]
+        y = coords[:, 1]
 
         indices = np.ravel_multi_index((x, y), self.cam_shape)
 

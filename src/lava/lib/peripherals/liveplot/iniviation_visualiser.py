@@ -1,3 +1,7 @@
+# Copyright (C) 2023 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+# See: https://spdx.org/licenses/
+
 import numpy as np
 import cv2 as cv
 
@@ -17,19 +21,22 @@ class InivationVisualiser(AbstractProcess):
 
     Parameters:
     -----------
-        in_shape (tuple): Shape of the incoming camera connection
-        flatten (bool, optional): Whether to flatten the output data array. Defaults to False.
-        window_name (string, optional): Name of the CV window opened by this process. Defaults to 'Spike Visualiser'
+        in_shape: tuple
+            Shape of the incoming camera connection
+        flatten: bool, optional
+            Whether to flatten the output data array. Defaults to False.
+        window_name: str, optional
+            Name of the CV window. Defaults to 'Spike Visualiser'
     Returns:
         None
     """
     def __init__(
         self,
-        in_shape,
-        flattened_input=False,
-        window_name="Spike Visualiser"
-    ) -> None:
-
+        in_shape: tuple,
+        flattened_input: bool = False,
+        window_name: str = "Spike Visualiser"
+        ) -> None:
+        
         self.flattened_input = flattened_input
         self.window_name = window_name
 
@@ -66,7 +73,8 @@ class PySparseInivationVisualiserModel(PyLoihiProcessModel):
 
     def run_spk(self) -> None:
         data, indices = self.a_in.recv()
-        colour_image = np.zeros((self.in_shape[0], self.in_shape[1], 3), dtype=np.uint8)
+        x_shape, y_shape = self.in_shape
+        colour_image = np.zeros((x_shape, y_shape, 3), dtype=np.uint8)
 
         on_events = indices[np.where(data == 1)]
         off_events = indices[np.where(data == 0)]
