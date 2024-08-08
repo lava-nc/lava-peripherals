@@ -55,6 +55,7 @@ pandas = "^2.0.2"
 fire = "^0.4.0"
 sk-video = "^1.1.10"
 pyrealsense2 = "^2.54.2.5684"
+requests = "^2.26"
 
 [tool.poetry.dev-dependencies]
 coverage = "^6.3.2"
