@@ -75,6 +75,7 @@ jobs:
 
     - name: Run unit tests
       run: |
+        sudo pip install -U requests
         poetry run pip install pyrealsense2
         export PYTHONPATH=$PYTHONPATH:/usr/lib/python3/dist-packages
         poetry run git lfs fetch
