@@ -40,6 +40,15 @@ jobs:
         with:
           lfs: true
 
+      - name: Install dependencies 
+        run: |
+          sudo add-apt-repository ${{ secrets.METAVISION_SETUP}} >> /dev/null
+          sudo add-apt-repository ppa:deadsnakes/ppa >> /dev/null
+          sudo apt update >> /dev/null >> /dev/null
+
+          sudo apt -y install python3.10-dev
+          sudo apt -y install metavision-sdk metavision-sdk-python3.10
+
       - name: Download lava-peripherals artifact
         uses: actions/download-artifact@v3
         with:
@@ -79,6 +88,15 @@ jobs:
         with:
           name: lava-peripherals
 
+      - name: Install dependencies 
+        run: |
+          sudo add-apt-repository ${{ secrets.METAVISION_SETUP}} >> /dev/null
+          sudo add-apt-repository ppa:deadsnakes/ppa >> /dev/null
+          sudo apt update >> /dev/null >> /dev/null
+
+          sudo apt -y install python3.10-dev
+          sudo apt -y install metavision-sdk metavision-sdk-python3.10
+
       - name: Test artifact tar.gz
         run: |
           rm -rf tmp
@@ -109,6 +127,16 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: lava-peripherals
+
+      - name: Install dependencies 
+        run: |
+          sudo add-apt-repository ${{ secrets.METAVISION_SETUP}} >> /dev/null
+          sudo add-apt-repository ppa:deadsnakes/ppa >> /dev/null
+          sudo apt update >> /dev/null >> /dev/null
+
+          sudo apt -y install python3.10-dev
+          sudo apt -y install metavision-sdk metavision-sdk-python3.10
+
       - name: Test artifact .whl
         run: |
           rm -rf tmp
@@ -164,6 +192,7 @@ jobs:
           [[ "$(pipx run poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || echo prerelease=true >> $GITHUB_OUTPUT
           echo "release-version=$(pipx run poetry version --short)" >> $GITHUB_OUTPUT
           echo "release-commit=$(git log -n 1 --pretty=format:"%H")" >> $GITHUB_OUTPUT
+
       - name: Print Versions
         run: |
           [[ "$(pipx run poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || echo prerelease=true
@@ -177,7 +206,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           draft: true
           prerelease: steps.check-version.outputs.prerelease == 'true'
-          name: "Lava Peripherals ${{ steps.check-version.outputs.release-version }}"
+          name: "Lava DNF ${{ steps.check-version.outputs.release-version }}"
           commit: "${{ steps.check-version.outputs.release-commit }}"
           tag: "v${{ steps.check-version.outputs.release-version }}"
           discussionCategory: "Announcements"
@@ -185,27 +214,12 @@ jobs:
           generateReleaseNotes: true
           makeLatest: true
 
-      - name: Mint Github API token
-        id: mint-token
-        run: |
-          # retrieve OIDC token
-          resp=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=pypi")
-          oidc_token=$(jq '.value' <<< "${resp}")
-
-          # exchange OIDC token for API token
-          resp=$(curl -X POST https://pypi.org/_/oidc/github/mint-token -d "{\"token\": \"${oidc_token}\"}")
-          api_token=$(jq '.token' <<< "${resp}")
-
-          # mask the API token, to prevent leaking it
-          echo "::add-mask::${api_token}"
-
-          echo "api-token=${api_token}" >> "${GITHUB_OUTPUT}"
-
       - name: Publish to PyPI
         if: steps.check-version.outputs.prerelease != 'true'
         run: |
-          poetry config pypi-token.pypi ${{ steps.mint-token.outputs.api-token }}
           mkdir dist
           cp lava* dist/.
-          poetry publish
+
+      - name: Publish package distributions to PyPI
+        if: steps.check-version.outputs.prerelease != 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
