@@ -130,7 +130,7 @@ jobs:
 
       - name: Install dependencies 
         run: |
-          sudo add-apt-repository ${{ secrets.METAVISION_SETUP}} >> /dev/null
+          sudo add-apt-repository ${{ secrets.METAVISION_SETUP}}
           sudo add-apt-repository ppa:deadsnakes/ppa >> /dev/null
           sudo apt update >> /dev/null >> /dev/null
 
