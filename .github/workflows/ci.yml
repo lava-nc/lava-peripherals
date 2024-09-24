@@ -21,7 +21,7 @@ jobs:
         lfs: true
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.2
+      uses: lava-nc/ci-setup-composite-action@v1.5.12_py3.10
       with:
         repository: 'Lava'
 
@@ -37,7 +37,7 @@ jobs:
         lfs: true
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.2
+      uses: lava-nc/ci-setup-composite-action@v1.5.12_py3.10
       with:
         repository: 'Lava'
 
@@ -65,11 +65,11 @@ jobs:
         sudo add-apt-repository ppa:deadsnakes/ppa >> /dev/null
         sudo apt update >> /dev/null >> /dev/null
 
-        sudo apt -y install python3.9-dev >> /dev/null
-        sudo apt -y install metavision-sdk metavision-sdk-python3.9 >> /dev/null
+        sudo apt -y install python3.10-dev
+        sudo apt -y install metavision-sdk metavision-sdk-python3.10
 
     - name: setup CI
-      uses: lava-nc/ci-setup-composite-action@v1.3_py3.9
+      uses: lava-nc/ci-setup-composite-action@v1.5.12_py3.10
       with:
         repository: 'Lava'
 
